@@ -58,3 +58,21 @@ def get_job(job_id: str, request: Request) -> dict:
     if job is None:
         raise HTTPException(status_code=404, detail="job not found")
     return jobs_service.job_to_dict(job)
+
+
+@router.post("/{job_id}/cancel")
+def cancel_job(job_id: str, request: Request) -> dict:
+    ok = jobs_service.request_cancel(request.app.state.engine, job_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="job not found")
+    return {"ok": True}
+
+
+@router.delete("/{job_id}")
+def delete_job_handler(job_id: str, request: Request) -> dict:
+    ok = jobs_service.delete_job(
+        request.app.state.engine, request.app.state.settings, job_id
+    )
+    if not ok:
+        raise HTTPException(status_code=404, detail="job not found")
+    return {"ok": True}
