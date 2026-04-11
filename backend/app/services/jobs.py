@@ -1,3 +1,4 @@
+import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
@@ -74,3 +75,53 @@ def create_job_from_upload(
         s.commit()
         s.refresh(job)
     return job, dest
+
+
+def get_job(engine: Engine, job_id: str) -> Job | None:
+    with Session(engine) as s:
+        return s.get(Job, job_id)
+
+
+def job_to_dict(job: Job) -> dict:
+    return {
+        "id": job.id,
+        "source_url": job.source_url,
+        "source_kind": job.source_kind,
+        "title": job.title,
+        "duration_sec": job.duration_sec,
+        "language": job.language,
+        "model_name": job.model_name,
+        "status": job.status.value if hasattr(job.status, "value") else job.status,
+        "progress": job.progress,
+        "stage_message": job.stage_message,
+        "error_message": job.error_message,
+        "created_at": job.created_at.isoformat(),
+        "updated_at": job.updated_at.isoformat(),
+        "expires_at": job.expires_at.isoformat(),
+        "cancel_requested": job.cancel_requested,
+    }
+
+
+def request_cancel(engine: Engine, job_id: str) -> bool:
+    with Session(engine) as s:
+        job = s.get(Job, job_id)
+        if job is None:
+            return False
+        job.cancel_requested = True
+        job.updated_at = datetime.now(UTC)
+        s.add(job)
+        s.commit()
+        return True
+
+
+def delete_job(engine: Engine, settings: Settings, job_id: str) -> bool:
+    with Session(engine) as s:
+        job = s.get(Job, job_id)
+        if job is None:
+            return False
+        s.delete(job)
+        s.commit()
+    job_dir = settings.media_dir / job_id
+    if job_dir.exists():
+        shutil.rmtree(job_dir, ignore_errors=True)
+    return True

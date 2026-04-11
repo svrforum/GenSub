@@ -50,3 +50,11 @@ async def upload_job(
     )
     dest.write_bytes(contents)
     return {"job_id": job.id, "status": job.status.value}
+
+
+@router.get("/{job_id}")
+def get_job(job_id: str, request: Request) -> dict:
+    job = jobs_service.get_job(request.app.state.engine, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="job not found")
+    return jobs_service.job_to_dict(job)
