@@ -1,0 +1,50 @@
+services:
+  api:
+    build: .
+    image: gensub:latest
+    container_name: gensub-api
+    ports:
+      - "${GENSUB_PORT:-8000}:8000"
+    environment:
+      GENSUB_ROLE: api
+      DATABASE_URL: sqlite:////data/db/jobs.db
+      MEDIA_DIR: /data/media
+      MODEL_CACHE_DIR: /data/models
+      JOB_TTL_HOURS: ${JOB_TTL_HOURS:-24}
+      MAX_VIDEO_MINUTES: ${MAX_VIDEO_MINUTES:-90}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-small}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-*}
+    volumes:
+      - ./data:/data
+    command: >
+      uv run --no-sync uvicorn app.main:app
+      --host 0.0.0.0 --port 8000
+      --proxy-headers
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build: .
+    image: gensub:latest
+    container_name: gensub-worker
+    depends_on:
+      - api
+    environment:
+      GENSUB_ROLE: worker
+      DATABASE_URL: sqlite:////data/db/jobs.db
+      MEDIA_DIR: /data/media
+      MODEL_CACHE_DIR: /data/models
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-small}
+      COMPUTE_TYPE: ${COMPUTE_TYPE:-int8}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      - ./data:/data
+    command: >
+      uv run --no-sync python -m worker.main
+    restart: unless-stopped
