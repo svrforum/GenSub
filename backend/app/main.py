@@ -26,11 +26,3 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(config_router)
     return app
-
-
-import sys as _sys
-
-# Only eagerly create app when not running under pytest
-# (avoids touching the filesystem with default paths during test collection)
-if "pytest" not in _sys.modules:
-    app = create_app()

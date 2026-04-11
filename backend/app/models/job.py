@@ -1,10 +1,10 @@
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 
 from sqlmodel import Field, SQLModel
 
 
-class JobStatus(str, Enum):
+class JobStatus(StrEnum):
     pending = "pending"
     downloading = "downloading"
     transcribing = "transcribing"
@@ -14,13 +14,13 @@ class JobStatus(str, Enum):
     failed = "failed"
 
 
-class SourceKind(str, Enum):
+class SourceKind(StrEnum):
     url = "url"
     upload = "upload"
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Job(SQLModel, table=True):
