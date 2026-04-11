@@ -1,0 +1,10 @@
+**/__pycache__
+**/.venv
+**/node_modules
+**/.svelte-kit
+**/build
+data/
+.git/
+.env
+.env.local
+docs/
