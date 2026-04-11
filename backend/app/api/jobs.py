@@ -27,7 +27,7 @@ def create_job(body: JobCreateRequest, request: Request) -> dict:
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
 async def upload_job(
     request: Request,
-    file: UploadFile = File(...),
+    file: UploadFile = File(...),  # noqa: B008
     model: str = Form("small"),
     language: str | None = Form(None),
     initial_prompt: str | None = Form(None),

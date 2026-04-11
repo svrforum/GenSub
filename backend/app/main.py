@@ -1,5 +1,5 @@
 import asyncio
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,10 +16,8 @@ from app.services.cleanup import purge_expired_jobs, sweep_zombie_jobs
 async def _cleanup_loop(app: FastAPI) -> None:
     while True:
         await asyncio.sleep(3600)
-        try:
+        with suppress(Exception):
             purge_expired_jobs(app.state.engine, app.state.settings)
-        except Exception:
-            pass
 
 
 @asynccontextmanager
@@ -30,10 +28,8 @@ async def _lifespan(app: FastAPI):
         yield
     finally:
         task.cancel()
-        try:
+        with suppress(asyncio.CancelledError):
             await task
-        except asyncio.CancelledError:
-            pass
 
 
 def create_app() -> FastAPI:

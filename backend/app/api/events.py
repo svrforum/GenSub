@@ -10,6 +10,7 @@ router = APIRouter(prefix="/api/jobs", tags=["events"])
 
 TERMINAL_STATES = {"ready", "done", "failed"}
 POLL_INTERVAL_SEC = 0.5
+MAX_DURATION_SEC = 3600  # 1 hour hard cap on a single SSE subscription
 
 
 @router.get("/{job_id}/events")
@@ -21,14 +22,19 @@ async def events(job_id: str, request: Request):
 
     async def event_gen():
         last_snapshot = None
-        while True:
+        elapsed = 0.0
+        while elapsed < MAX_DURATION_SEC:
             if await request.is_disconnected():
                 return
             current = jobs_service.get_job(engine, job_id)
             if current is None:
                 yield {"event": "error", "data": json.dumps({"message": "job disappeared"})}
                 return
-            status_val = current.status.value if hasattr(current.status, "value") else current.status
+            status_val = (
+                current.status.value
+                if hasattr(current.status, "value")
+                else current.status
+            )
             snapshot = (
                 status_val,
                 current.progress,
@@ -57,5 +63,7 @@ async def events(job_id: str, request: Request):
                     yield {"event": "done", "data": json.dumps({"status": status_val})}
                     return
             await asyncio.sleep(POLL_INTERVAL_SEC)
+            elapsed += POLL_INTERVAL_SEC
+        yield {"event": "error", "data": json.dumps({"message": "stream timed out"})}
 
     return EventSourceResponse(event_gen())
