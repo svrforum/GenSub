@@ -1,5 +1,6 @@
 <script lang="ts">
   import BurnDoneScreen from '$lib/screens/BurnDoneScreen.svelte';
+  import ErrorScreen from '$lib/screens/ErrorScreen.svelte';
   import IdleScreen from '$lib/screens/IdleScreen.svelte';
   import ProcessingScreen from '$lib/screens/ProcessingScreen.svelte';
   import ReadyScreen from '$lib/screens/ReadyScreen.svelte';
@@ -22,12 +23,5 @@
 {:else if $current.screen === 'burn_done' && jobId}
   <BurnDoneScreen {jobId} />
 {:else if $current.screen === 'error'}
-  <div class="min-h-screen flex items-center justify-center">
-    <div class="text-center">
-      <div class="text-title text-danger mb-2">문제가 생겼어요</div>
-      <div class="text-body text-text-secondary-light dark:text-text-secondary-dark">
-        {$current.errorMessage ?? '알 수 없는 오류'}
-      </div>
-    </div>
-  </div>
+  <ErrorScreen />
 {/if}
