@@ -4,6 +4,8 @@ from typing import Any
 
 import yt_dlp
 
+_PARTIAL_SUFFIXES = (".part", ".ytdl", ".partial", ".tmp")
+
 
 def parse_progress_hook(info: dict[str, Any]) -> float:
     status = info.get("status")
@@ -52,13 +54,22 @@ def download_video(
         "noprogress": True,
         "quiet": True,
     }
-    if cookies_file and cookies_file.exists():
+    if cookies_file is not None:
+        if not cookies_file.exists():
+            raise FileNotFoundError(f"cookies_file not found: {cookies_file}")
         ydl_opts["cookiefile"] = str(cookies_file)
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
+        info = ydl.extract_info(url, download=True) or {}
 
-    downloaded = next(iter(dest_dir.glob("source.*")), None)
+    downloaded = next(
+        (
+            p
+            for p in sorted(dest_dir.glob("source.*"))
+            if not p.name.endswith(_PARTIAL_SUFFIXES)
+        ),
+        None,
+    )
     if downloaded is None:
         raise RuntimeError("yt-dlp finished but no file found")
 
