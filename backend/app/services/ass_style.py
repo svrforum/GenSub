@@ -21,20 +21,55 @@ def _ts_ass(t: float) -> str:
     return f"{h}:{m:02d}:{s_int:02d}.{cs:02d}"
 
 
-HEADER_TEMPLATE = """[Script Info]
-ScriptType: v4.00+
-PlayResX: 1920
-PlayResY: 1080
-WrapStyle: 0
-ScaledBorderAndShadow: yes
+_V4_FORMAT_FIELDS = (
+    "Name",
+    "Fontname",
+    "Fontsize",
+    "PrimaryColour",
+    "SecondaryColour",
+    "OutlineColour",
+    "BackColour",
+    "Bold",
+    "Italic",
+    "Underline",
+    "StrikeOut",
+    "ScaleX",
+    "ScaleY",
+    "Spacing",
+    "Angle",
+    "BorderStyle",
+    "Outline",
+    "Shadow",
+    "Alignment",
+    "MarginL",
+    "MarginR",
+    "MarginV",
+    "Encoding",
+)
 
-[V4+ Styles]
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font},{size},&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,{outline_thickness},0,2,40,40,60,1
+_V4_FORMAT_LINE = "Format: " + ", ".join(_V4_FORMAT_FIELDS)
 
-[Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-"""
+_STYLE_DEFAULT_LINE = (
+    "Style: Default,{font},{size},"
+    "&H00FFFFFF,&H000000FF,&H00000000,&H80000000,"
+    "0,0,0,0,100,100,0,0,1,{outline_thickness},0,2,40,40,60,1"
+)
+
+HEADER_TEMPLATE = (
+    "[Script Info]\n"
+    "ScriptType: v4.00+\n"
+    "PlayResX: 1920\n"
+    "PlayResY: 1080\n"
+    "WrapStyle: 0\n"
+    "ScaledBorderAndShadow: yes\n"
+    "\n"
+    "[V4+ Styles]\n"
+    f"{_V4_FORMAT_LINE}\n"
+    f"{_STYLE_DEFAULT_LINE}\n"
+    "\n"
+    "[Events]\n"
+    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+)
 
 
 def srt_segments_to_ass(segments: Iterable[SegmentData], style: BurnStyle) -> str:
