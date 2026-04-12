@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
 
   import { api } from '$lib/api/jobs';
   import type { JobDto, SegmentDto } from '$lib/api/types';
@@ -7,6 +7,7 @@
   import SearchReplace from '$lib/ui/SearchReplace.svelte';
   import SegmentList from '$lib/ui/SegmentList.svelte';
   import VideoPlayer from '$lib/ui/VideoPlayer.svelte';
+  import { installShortcuts } from './useShortcuts';
 
   export let jobId: string;
 
@@ -18,6 +19,7 @@
   let currentTime = 0;
   let showSearch = false;
   let showBurnSheet = false;
+  let unshort: (() => void) | null = null;
 
   onMount(async () => {
     try {
@@ -27,6 +29,37 @@
     } finally {
       loading = false;
     }
+  });
+
+  onMount(() => {
+    unshort = installShortcuts({
+      togglePlay: () => playerRef?.togglePlay(),
+      prevSegment: () => {
+        const i = segments.findIndex((s) => currentTime >= s.start && currentTime < s.end);
+        if (i > 0) playerRef?.seekTo(segments[i - 1].start);
+      },
+      nextSegment: () => {
+        const i = segments.findIndex((s) => currentTime >= s.start && currentTime < s.end);
+        if (i >= 0 && i < segments.length - 1) playerRef?.seekTo(segments[i + 1].start);
+      },
+      seekRelative: (d) => {
+        const t = Math.max(0, currentTime + d);
+        playerRef?.seekTo(t);
+      },
+      regenerateCurrent: async () => {
+        const i = segments.findIndex((s) => currentTime >= s.start && currentTime < s.end);
+        if (i < 0) return;
+        try {
+          await api.regenerateSegment(jobId, segments[i].idx);
+          segments = await api.segments(jobId);
+        } catch {}
+      },
+      toggleSearch: () => (showSearch = !showSearch)
+    });
+  });
+
+  onDestroy(() => {
+    unshort?.();
   });
 
   async function handleBurnClick() {
