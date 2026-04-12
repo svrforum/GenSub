@@ -43,6 +43,39 @@
     current.update((c) => ({ ...c, stageMessage: arr[rotationIdx % arr.length] }));
   }
 
+  interface Sample {
+    t: number;
+    p: number;
+  }
+  let samples: Sample[] = [];
+  let etaSec: number | null = null;
+
+  function pushSample(progress: number) {
+    const t = Date.now();
+    samples = [...samples, { t, p: progress }].slice(-6);
+    if (samples.length < 2) {
+      etaSec = null;
+      return;
+    }
+    const first = samples[0];
+    const last = samples[samples.length - 1];
+    const dp = last.p - first.p;
+    const dt = (last.t - first.t) / 1000;
+    if (dp <= 0 || dt <= 0) {
+      etaSec = null;
+      return;
+    }
+    const remaining = Math.max(0, 1 - last.p);
+    etaSec = Math.round(remaining / (dp / dt));
+  }
+
+  function formatEta(secs: number | null): string | null {
+    if (secs == null || !isFinite(secs) || secs < 0) return null;
+    if (secs < 60) return `${secs}초 남았어요`;
+    const mins = Math.round(secs / 60);
+    return `${mins}분 남았어요`;
+  }
+
   onMount(async () => {
     try {
       const job = await api.getJob(jobId);
@@ -58,13 +91,19 @@
 
     unsubscribe = subscribeJobEvents(jobId, {
       onProgress(evt) {
+        current.update((c) => {
+          if (c.job && c.job.status !== evt.status) {
+            samples = [];
+          }
+          return {
+            ...c,
+            progress: evt.progress,
+            stageMessage: evt.stage_message ?? stageCopy[evt.status] ?? c.stageMessage,
+            job: c.job ? { ...c.job, status: evt.status } : c.job
+          };
+        });
         rotationIdx = 0;
-        current.update((c) => ({
-          ...c,
-          progress: evt.progress,
-          stageMessage: evt.stage_message ?? stageCopy[evt.status] ?? c.stageMessage,
-          job: c.job ? { ...c.job, status: evt.status } : c.job
-        }));
+        pushSample(evt.progress);
       },
       onDone(status) {
         if (status === 'ready' || status === 'done') {
@@ -110,6 +149,11 @@
 
     <div class="text-center">
       <div class="text-title">{$current.stageMessage}</div>
+      {#if formatEta(etaSec)}
+        <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark mt-2">
+          {formatEta(etaSec)}
+        </div>
+      {/if}
     </div>
 
     <Button variant="ghost" on:click={cancel}>취소</Button>
