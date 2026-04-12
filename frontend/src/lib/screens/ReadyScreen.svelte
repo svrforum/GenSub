@@ -50,6 +50,7 @@
       <aside class="card p-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
         <div class="text-title mb-4">자막</div>
         <SegmentList
+          {jobId}
           {segments}
           bind:currentTime
           onJump={(t) => playerRef?.seekTo(t)}
