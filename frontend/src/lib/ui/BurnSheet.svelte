@@ -24,6 +24,7 @@
       onClose();
       current.set({
         screen: 'processing',
+        jobId,
         job: null,
         progress: 0,
         stageMessage: '자막을 영상에 입히고 있어요',

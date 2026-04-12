@@ -5,6 +5,7 @@ export type Screen = 'idle' | 'processing' | 'ready' | 'burn_done' | 'error';
 
 export interface CurrentState {
   screen: Screen;
+  jobId: string | null;
   job: JobDto | null;
   progress: number;
   stageMessage: string;
@@ -13,6 +14,7 @@ export interface CurrentState {
 
 const initial: CurrentState = {
   screen: 'idle',
+  jobId: null,
   job: null,
   progress: 0,
   stageMessage: '',

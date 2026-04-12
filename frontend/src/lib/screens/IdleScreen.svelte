@@ -37,10 +37,6 @@
     config?.available_models ?? (['tiny', 'base', 'small', 'medium', 'large-v3'] as ModelName[])
   ).map((m) => ({ value: m as string, label: m as string }));
 
-  function setCurrentJobId(jobId: string) {
-    (window as unknown as { __gensubCurrentJobId?: string }).__gensubCurrentJobId = jobId;
-  }
-
   async function start() {
     if (!url.trim() || busy) return;
     busy = true;
@@ -52,9 +48,9 @@
         language: language === 'auto' ? undefined : language
       });
       pushHistory({ jobId: res.job_id, title: null, createdAt: new Date().toISOString() });
-      setCurrentJobId(res.job_id);
       current.set({
         screen: 'processing',
+        jobId: res.job_id,
         job: null,
         progress: 0,
         stageMessage: '준비하고 있어요',
@@ -92,9 +88,9 @@
     try {
       const res = await api.uploadJob(file, model, language === 'auto' ? undefined : language);
       pushHistory({ jobId: res.job_id, title: file.name, createdAt: new Date().toISOString() });
-      setCurrentJobId(res.job_id);
       current.set({
         screen: 'processing',
+        jobId: res.job_id,
         job: null,
         progress: 0,
         stageMessage: '준비하고 있어요',

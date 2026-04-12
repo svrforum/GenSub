@@ -9,9 +9,9 @@
   export let onClose: () => void = () => {};
 
   function openJob(jobId: string) {
-    (window as unknown as { __gensubCurrentJobId?: string }).__gensubCurrentJobId = jobId;
     current.set({
       screen: 'ready',
+      jobId,
       job: null,
       progress: 1,
       stageMessage: '',
