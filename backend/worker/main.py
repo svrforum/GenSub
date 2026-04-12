@@ -8,6 +8,7 @@ from app.core.db import create_db_engine, init_db
 from app.core.settings import Settings, get_settings
 from app.models.job import Job, JobStatus
 from app.services import job_state
+from app.services.cleanup import sweep_zombie_jobs
 from app.services.pipeline import process_burn_job, process_job
 
 POLL_INTERVAL_SEC = 1.5
@@ -16,7 +17,7 @@ _stop_requested = False
 
 
 def _handle_signal(*_args) -> None:
-    global _stop_requested
+    global _stop_requested  # noqa: PLW0603
     _stop_requested = True
 
 
@@ -33,12 +34,16 @@ def _find_burn_candidate(engine: Engine) -> Job | None:
 def tick(settings: Settings, engine: Engine) -> bool:
     burn = _find_burn_candidate(engine)
     if burn is not None:
+        print(f"[worker] burn job {burn.id[:8]}...", flush=True)
         process_burn_job(settings=settings, engine=engine, job_id=burn.id)
+        print(f"[worker] burn job {burn.id[:8]}... done", flush=True)
         return True
 
     claimed = job_state.claim_next_pending_job(engine)
     if claimed is not None:
+        print(f"[worker] processing job {claimed.id[:8]}...", flush=True)
         process_job(settings=settings, engine=engine, job_id=claimed.id)
+        print(f"[worker] job {claimed.id[:8]}... done", flush=True)
         return True
 
     return False
@@ -51,6 +56,10 @@ def run() -> None:
     settings = get_settings()
     engine = create_db_engine(settings.database_url)
     init_db(engine)
+
+    swept = sweep_zombie_jobs(engine)
+    if swept:
+        print(f"[worker] swept {swept} zombie job(s)", flush=True)
 
     print(
         f"[worker] starting (role={settings.gensub_role}, "

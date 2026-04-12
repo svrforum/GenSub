@@ -29,6 +29,9 @@ def segments_from_whisper_output(whisper_segments: Iterable[Any]) -> list[Segmen
     return out
 
 
+CANCEL_CHECK_INTERVAL = 5  # check cancel every N segments
+
+
 def transcribe(
     audio_path: Path,
     model_name: str,
@@ -37,6 +40,7 @@ def transcribe(
     language: str | None = None,
     initial_prompt: str | None = None,
     progress_callback: Callable[[float], None] | None = None,
+    cancel_check: Callable[[], None] | None = None,
 ) -> TranscribeResult:
     from faster_whisper import WhisperModel
 
@@ -62,6 +66,8 @@ def transcribe(
         collected.append(seg)
         if progress_callback and seg.end > 0:
             progress_callback(min(1.0, seg.end / total_duration))
+        if cancel_check and len(collected) % CANCEL_CHECK_INTERVAL == 0:
+            cancel_check()
 
     mapped = segments_from_whisper_output(collected)
     return TranscribeResult(

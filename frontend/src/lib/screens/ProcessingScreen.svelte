@@ -36,6 +36,7 @@
 
   let rotationTimer: ReturnType<typeof setInterval> | null = null;
   let rotationIdx = 0;
+  let queueMessage: string | null = null;
 
   function applyRotatingCopy(status: string) {
     const arr = rotatingCopy[status];
@@ -104,6 +105,21 @@
         });
         rotationIdx = 0;
         pushSample(evt.progress);
+
+        // Queue info for pending jobs
+        if (evt.status === 'pending' && 'active_count' in evt) {
+          const active = (evt as any).active_count as number;
+          const ahead = (evt as any).ahead_count as number;
+          if (active > 0) {
+            queueMessage = '앞의 작업이 진행 중이에요. 잠시 기다려 주세요';
+          } else if (ahead > 0) {
+            queueMessage = `대기 중 (${ahead}개 작업이 앞에 있어요)`;
+          } else {
+            queueMessage = '곧 시작할게요';
+          }
+        } else {
+          queueMessage = null;
+        }
       },
       onDone(status) {
         if (status === 'done') {
@@ -154,6 +170,11 @@
       {#if formatEta(etaSec)}
         <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark mt-2">
           {formatEta(etaSec)}
+        </div>
+      {/if}
+      {#if queueMessage}
+        <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark mt-2">
+          {queueMessage}
         </div>
       {/if}
     </div>

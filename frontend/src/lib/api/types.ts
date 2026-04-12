@@ -57,4 +57,6 @@ export interface JobProgressEvent {
   status: JobStatus;
   progress: number;
   stage_message: string | null;
+  active_count?: number;
+  ahead_count?: number;
 }

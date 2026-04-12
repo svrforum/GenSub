@@ -78,6 +78,9 @@ def process_job(settings: Settings, engine: Engine, job_id: str) -> None:
         def tr_progress(pct: float) -> None:
             job_state.update_progress(engine, job_id, pct)
 
+        def tr_cancel_check() -> None:
+            _check_cancel(engine, job_id)
+
         tr_result = transcribe(
             audio_path=audio_path,
             model_name=model_name,
@@ -86,6 +89,7 @@ def process_job(settings: Settings, engine: Engine, job_id: str) -> None:
             language=language_override,
             initial_prompt=initial_prompt,
             progress_callback=tr_progress,
+            cancel_check=tr_cancel_check,
         )
         job_state.update_language(engine, job_id, tr_result.language)
 
