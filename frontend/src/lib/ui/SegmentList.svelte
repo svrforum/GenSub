@@ -104,6 +104,12 @@
                 segments = await api.segments(jobId);
               } catch {}
             }}>↻ 재전사</button>
+          <button type="button" class="px-2 py-1 rounded bg-success text-white"
+            on:click={async () => {
+              try {
+                await api.exportClip(jobId, seg.start, seg.end);
+              } catch {}
+            }}>📎 구간 다운로드</button>
         </div>
       {/if}
     </div>

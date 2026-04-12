@@ -67,6 +67,35 @@ export const api = {
       outline: opts.outline ?? true
     }),
 
+  exportClip: async (
+    id: string,
+    start: number,
+    end: number,
+    burnSubtitles = true,
+    opts: { font?: string; size?: number; outline?: boolean } = {}
+  ) => {
+    const resp = await fetch(`/api/jobs/${id}/clip`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        start,
+        end,
+        burn_subtitles: burnSubtitles,
+        font: opts.font ?? 'Pretendard',
+        size: opts.size ?? 42,
+        outline: opts.outline ?? true,
+      }),
+    });
+    if (!resp.ok) throw new Error(`clip export failed: ${resp.status}`);
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `clip-${start.toFixed(1)}-${end.toFixed(1)}.mp4`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
   videoUrl: (id: string) => `/api/jobs/${id}/video`,
   vttUrl: (id: string) => `/api/jobs/${id}/subtitles.vtt`,
   srtUrl: (id: string) => `/api/jobs/${id}/subtitles.srt`,

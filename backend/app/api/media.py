@@ -4,9 +4,12 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, PlainTextResponse, Response, StreamingResponse
+from pydantic import BaseModel
 
 from app.core.settings import Settings
 from app.services import jobs as jobs_service
+from app.services.ass_style import BurnStyle
+from app.services.clip import export_clip
 from app.services.muxer import mux_video_with_subtitles
 from app.services.segments import load_segments
 from app.services.subtitles import format_json, format_txt
@@ -169,4 +172,57 @@ def download_burned(job_id: str, request: Request) -> FileResponse:
         path,
         media_type="video/mp4",
         filename="burned.mp4",
+    )
+
+
+class ClipRequest(BaseModel):
+    start: float
+    end: float
+    burn_subtitles: bool = True
+    font: str = "Pretendard"
+    size: int = 42
+    outline: bool = True
+
+
+@router.post("/{job_id}/clip")
+def export_clip_endpoint(
+    job_id: str,
+    body: ClipRequest,
+    request: Request,
+) -> FileResponse:
+    engine = request.app.state.engine
+    settings = request.app.state.settings
+
+    job = jobs_service.get_job(engine, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="job not found")
+
+    media_dir = settings.media_dir / job_id
+    src = _resolve_source(settings, job_id)
+
+    segments = None
+    style = None
+    if body.burn_subtitles:
+        segments = load_segments(engine, job_id)
+        style = BurnStyle(font=body.font, size=body.size, outline=body.outline)
+
+    clip_name = f"clip-{body.start:.1f}-{body.end:.1f}.mp4"
+    output = media_dir / clip_name
+
+    try:
+        export_clip(
+            video=src,
+            output=output,
+            start=body.start,
+            end=body.end,
+            segments=segments,
+            style=style,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return FileResponse(
+        output,
+        media_type="video/mp4",
+        filename=clip_name,
     )
