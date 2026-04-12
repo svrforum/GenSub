@@ -48,4 +48,5 @@ services:
       - ./data:/data
     command: >
       uv run --no-sync python -m worker.main
+    stop_grace_period: 30s
     restart: unless-stopped
