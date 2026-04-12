@@ -3,10 +3,12 @@ from collections.abc import Iterator
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import FileResponse, PlainTextResponse, Response, StreamingResponse
 
 from app.core.settings import Settings
 from app.services import jobs as jobs_service
+from app.services.segments import load_segments
+from app.services.subtitles import format_json, format_txt
 
 router = APIRouter(prefix="/api/jobs", tags=["media"])
 
@@ -83,4 +85,45 @@ def get_video(job_id: str, request: Request) -> Response:
             "Content-Length": str(length),
             "Accept-Ranges": "bytes",
         },
+    )
+
+
+@router.get("/{job_id}/subtitles.vtt")
+def get_vtt(job_id: str, request: Request) -> FileResponse:
+    settings = request.app.state.settings
+    path = settings.media_dir / job_id / "subtitles.vtt"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="subtitles not ready")
+    return FileResponse(path, media_type="text/vtt; charset=utf-8")
+
+
+@router.get("/{job_id}/subtitles.srt")
+def get_srt(job_id: str, request: Request) -> FileResponse:
+    settings = request.app.state.settings
+    path = settings.media_dir / job_id / "subtitles.srt"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="subtitles not ready")
+    return FileResponse(
+        path,
+        media_type="application/x-subrip",
+        filename="subtitles.srt",
+    )
+
+
+@router.get("/{job_id}/transcript.txt")
+def get_txt(job_id: str, request: Request) -> PlainTextResponse:
+    engine = request.app.state.engine
+    segments = load_segments(engine, job_id)
+    return PlainTextResponse(
+        format_txt(segments), media_type="text/plain; charset=utf-8"
+    )
+
+
+@router.get("/{job_id}/transcript.json")
+def get_json(job_id: str, request: Request) -> Response:
+    engine = request.app.state.engine
+    segments = load_segments(engine, job_id)
+    return Response(
+        content=format_json(segments),
+        media_type="application/json; charset=utf-8",
     )
