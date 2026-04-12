@@ -3,6 +3,7 @@
 
   import { api } from '$lib/api/jobs';
   import type { JobDto, SegmentDto } from '$lib/api/types';
+  import SegmentList from '$lib/ui/SegmentList.svelte';
   import VideoPlayer from '$lib/ui/VideoPlayer.svelte';
 
   export let jobId: string;
@@ -48,16 +49,11 @@
 
       <aside class="card p-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
         <div class="text-title mb-4">자막</div>
-        <div class="space-y-2">
-          {#each segments as seg}
-            <div class="p-3 rounded-input">
-              <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark mb-1">
-                {seg.start.toFixed(2)} → {seg.end.toFixed(2)}
-              </div>
-              <div class="text-body">{seg.text}</div>
-            </div>
-          {/each}
-        </div>
+        <SegmentList
+          {segments}
+          bind:currentTime
+          onJump={(t) => playerRef?.seekTo(t)}
+        />
       </aside>
     </div>
   {/if}
