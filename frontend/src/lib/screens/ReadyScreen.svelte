@@ -3,6 +3,7 @@
 
   import { api } from '$lib/api/jobs';
   import type { JobDto, SegmentDto } from '$lib/api/types';
+  import VideoPlayer from '$lib/ui/VideoPlayer.svelte';
 
   export let jobId: string;
 
@@ -10,6 +11,8 @@
   let segments: SegmentDto[] = [];
   let loading = true;
   let errorText: string | null = null;
+  let playerRef: VideoPlayer | null = null;
+  let currentTime = 0;
 
   onMount(async () => {
     try {
@@ -31,7 +34,12 @@
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-8">
       <div class="flex flex-col gap-4">
         <div class="card overflow-hidden aspect-video">
-          <div class="w-full h-full bg-black" />
+          <VideoPlayer
+            bind:this={playerRef}
+            bind:currentTime
+            src={api.videoUrl(jobId)}
+            vttSrc={api.vttUrl(jobId)}
+          />
         </div>
         <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark">
           {job.duration_sec?.toFixed(0) ?? '?'}초 · {job.language ?? '?'} · {job.model_name} · {segments.length}개 세그먼트
