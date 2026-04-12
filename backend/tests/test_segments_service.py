@@ -6,6 +6,7 @@ from app.core.db import create_db_engine, init_db
 from app.models.job import Job, JobStatus
 from app.services.segments import (
     load_segments,
+    load_segments_with_meta,
     replace_all_segments,
     search_and_replace,
     update_segment,
@@ -79,3 +80,54 @@ def test_search_and_replace_counts(tmp_path):
     loaded = load_segments(engine, "j")
     assert loaded[0].text == "트랜스포머"
     assert loaded[1].text == "트랜스포머 이야기"
+
+
+def test_update_segment_returns_false_when_missing(tmp_path):
+    engine = _engine(tmp_path)
+    _mk_job(engine)
+    replace_all_segments(
+        engine,
+        "j",
+        [SegmentData(idx=0, start=0.0, end=1.0, text="hi")],
+    )
+    assert update_segment(engine, "j", 999, text="nope") is False
+
+
+def test_search_and_replace_case_sensitive(tmp_path):
+    engine = _engine(tmp_path)
+    _mk_job(engine)
+    replace_all_segments(
+        engine,
+        "j",
+        [
+            SegmentData(idx=0, start=0.0, end=1.0, text="Foo bar"),
+            SegmentData(idx=1, start=1.0, end=2.0, text="foo bar"),
+            SegmentData(idx=2, start=2.0, end=3.0, text="FOO bar"),
+        ],
+    )
+    n = search_and_replace(
+        engine, "j", find="foo", replace="baz", case_sensitive=True
+    )
+    assert n == 1
+    loaded = load_segments(engine, "j")
+    assert loaded[0].text == "Foo bar"   # untouched
+    assert loaded[1].text == "baz bar"   # replaced
+    assert loaded[2].text == "FOO bar"   # untouched
+
+
+def test_load_segments_with_meta_includes_edited_flag(tmp_path):
+    engine = _engine(tmp_path)
+    _mk_job(engine)
+    replace_all_segments(
+        engine,
+        "j",
+        [SegmentData(idx=0, start=0.0, end=1.0, text="hi")],
+    )
+    # replace_all sets edited=False; update_segment flips it
+    update_segment(engine, "j", 0, text="hello")
+
+    rows = load_segments_with_meta(engine, "j")
+    assert len(rows) == 1
+    assert rows[0]["edited"] is True
+    assert rows[0]["text"] == "hello"
+    assert rows[0]["idx"] == 0
