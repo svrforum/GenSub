@@ -1,4 +1,5 @@
 <script lang="ts">
+  import BurnDoneScreen from '$lib/screens/BurnDoneScreen.svelte';
   import IdleScreen from '$lib/screens/IdleScreen.svelte';
   import ProcessingScreen from '$lib/screens/ProcessingScreen.svelte';
   import ReadyScreen from '$lib/screens/ReadyScreen.svelte';
@@ -18,6 +19,8 @@
   <ProcessingScreen {jobId} />
 {:else if $current.screen === 'ready' && jobId}
   <ReadyScreen {jobId} />
+{:else if $current.screen === 'burn_done' && jobId}
+  <BurnDoneScreen {jobId} />
 {:else if $current.screen === 'error'}
   <div class="min-h-screen flex items-center justify-center">
     <div class="text-center">

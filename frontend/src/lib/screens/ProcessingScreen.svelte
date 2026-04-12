@@ -106,7 +106,9 @@
         pushSample(evt.progress);
       },
       onDone(status) {
-        if (status === 'ready' || status === 'done') {
+        if (status === 'done') {
+          current.update((c) => ({ ...c, screen: 'burn_done', progress: 1 }));
+        } else if (status === 'ready') {
           current.update((c) => ({ ...c, screen: 'ready', progress: 1 }));
         }
       },

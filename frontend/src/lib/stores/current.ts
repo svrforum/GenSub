@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import type { JobDto } from '$lib/api/types';
 
-export type Screen = 'idle' | 'processing' | 'ready' | 'error';
+export type Screen = 'idle' | 'processing' | 'ready' | 'burn_done' | 'error';
 
 export interface CurrentState {
   screen: Screen;
