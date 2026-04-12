@@ -1,6 +1,11 @@
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
+from pydantic import BaseModel
+from sqlmodel import Session
 
 from app.api.schemas import JobCreateRequest
+from app.models.job import Job, JobStatus
 from app.services import jobs as jobs_service
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
@@ -75,4 +80,31 @@ def delete_job_handler(job_id: str, request: Request) -> dict:
     )
     if not ok:
         raise HTTPException(status_code=404, detail="job not found")
+    return {"ok": True}
+
+
+class BurnRequest(BaseModel):
+    font: str = "Pretendard"
+    size: int = 42
+    outline: bool = True
+
+
+@router.post("/{job_id}/burn")
+def trigger_burn(job_id: str, body: BurnRequest, request: Request) -> dict:
+    engine = request.app.state.engine
+    with Session(engine) as s:
+        job = s.get(Job, job_id)
+        if job is None:
+            raise HTTPException(status_code=404, detail="job not found")
+        if job.status not in (JobStatus.ready, JobStatus.done):
+            raise HTTPException(
+                status_code=409,
+                detail=f"cannot burn from status {job.status.value}",
+            )
+        job.status = JobStatus.burning
+        job.progress = 0.0
+        job.stage_message = "자막을 영상에 입히고 있어요"
+        job.updated_at = datetime.now(UTC)
+        s.add(job)
+        s.commit()
     return {"ok": True}
