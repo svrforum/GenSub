@@ -15,8 +15,7 @@ node_modules/
 .svelte-kit/
 build/
 dist/
-frontend/package-lock.json
-# (keep npm lock by preference — user can uncomment)
+# frontend/package-lock.json  # tracked: required for Docker npm ci
 
 # Env
 .env
