@@ -1,13 +1,19 @@
 <script lang="ts">
   import { History, Moon, Sun } from 'lucide-svelte';
 
+  import { reset } from '$lib/stores/current';
   import { theme, toggleTheme } from '$lib/theme';
 
   export let onRecentClick: () => void = () => {};
 </script>
 
 <header class="fixed top-0 inset-x-0 z-30 flex items-center justify-between px-6 py-4 backdrop-blur">
-  <div class="text-title tracking-tight">GenSub</div>
+  <button
+    type="button"
+    on:click={reset}
+    class="text-title tracking-tight hover:opacity-70 transition-opacity"
+    aria-label="홈으로"
+  >GenSub</button>
   <div class="flex items-center gap-2">
     <button
       type="button"
