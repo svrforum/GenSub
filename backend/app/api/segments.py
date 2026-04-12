@@ -7,6 +7,7 @@ from app.api.schemas import (
 )
 from app.core.settings import Settings
 from app.services import jobs as jobs_service
+from app.services import regenerate as regenerate_service
 from app.services.segments import (
     load_segments,
     load_segments_with_meta,
@@ -77,3 +78,18 @@ def search_replace(
     if changed:
         _rewrite_subtitle_files(settings, job_id, engine)
     return SearchReplaceResponse(changed_count=changed)
+
+
+@router.post("/{job_id}/segments/{idx}/regenerate")
+def regenerate_segment_endpoint(job_id: str, idx: int, request: Request) -> dict:
+    engine = request.app.state.engine
+    settings = request.app.state.settings
+    job = jobs_service.get_job(engine, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="job not found")
+    try:
+        regenerate_service.regenerate_segment(settings, engine, job, idx)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    _rewrite_subtitle_files(settings, job_id, engine)
+    return {"ok": True}
