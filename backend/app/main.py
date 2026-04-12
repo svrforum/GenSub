@@ -1,8 +1,11 @@
 import asyncio
 from contextlib import asynccontextmanager, suppress
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.config import router as config_router
 from app.api.events import router as events_router
@@ -56,4 +59,24 @@ def create_app() -> FastAPI:
     app.include_router(events_router)
     app.include_router(media_router)
     app.include_router(segments_router)
+
+    static_path = settings.static_dir or (Path(__file__).parent / "static")
+    if static_path.exists() and (static_path / "index.html").exists():
+        app_assets = static_path / "_app"
+        if app_assets.exists():
+            app.mount(
+                "/_app",
+                StaticFiles(directory=app_assets),
+                name="sveltekit-assets",
+            )
+
+        @app.get("/{full_path:path}", include_in_schema=False)
+        async def spa_fallback(full_path: str) -> FileResponse:
+            if full_path.startswith("api/"):
+                raise HTTPException(status_code=404)
+            asset = static_path / full_path
+            if asset.is_file():
+                return FileResponse(asset)
+            return FileResponse(static_path / "index.html")
+
     return app

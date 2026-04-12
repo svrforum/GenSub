@@ -24,6 +24,8 @@ class Settings(BaseSettings):
 
     max_upload_mb: int = Field(default=2048, ge=1)
 
+    static_dir: Path | None = None
+
 
 def get_settings() -> Settings:
     return Settings()
