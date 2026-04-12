@@ -4,6 +4,7 @@
   import { api } from '$lib/api/jobs';
   import type { JobDto, SegmentDto } from '$lib/api/types';
   import DownloadBar from '$lib/ui/DownloadBar.svelte';
+  import BurnSheet from '$lib/ui/BurnSheet.svelte';
   import SearchReplace from '$lib/ui/SearchReplace.svelte';
   import SegmentList from '$lib/ui/SegmentList.svelte';
   import VideoPlayer from '$lib/ui/VideoPlayer.svelte';
@@ -62,11 +63,8 @@
     unshort?.();
   });
 
-  async function handleBurnClick() {
+  function handleBurnClick() {
     showBurnSheet = true;
-    try {
-      await api.triggerBurn(jobId);
-    } catch {}
   }
 </script>
 
@@ -90,11 +88,6 @@
           {job.duration_sec?.toFixed(0) ?? '?'}초 · {job.language ?? '?'} · {job.model_name} · {segments.length}개 세그먼트
         </div>
         <DownloadBar {jobId} onBurnClick={handleBurnClick} />
-        {#if showBurnSheet}
-          <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark">
-            영상 인코딩 중이에요. 잠시 후 다운로드 링크가 준비됩니다.
-          </div>
-        {/if}
       </div>
 
       <aside class="card p-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
@@ -126,3 +119,9 @@
     </div>
   {/if}
 </div>
+
+<BurnSheet
+  open={showBurnSheet}
+  {jobId}
+  onClose={() => (showBurnSheet = false)}
+/>
