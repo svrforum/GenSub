@@ -3,6 +3,8 @@
 
   import { api } from '$lib/api/jobs';
   import type { JobDto, SegmentDto } from '$lib/api/types';
+  import DownloadBar from '$lib/ui/DownloadBar.svelte';
+  import SearchReplace from '$lib/ui/SearchReplace.svelte';
   import SegmentList from '$lib/ui/SegmentList.svelte';
   import VideoPlayer from '$lib/ui/VideoPlayer.svelte';
 
@@ -14,6 +16,8 @@
   let errorText: string | null = null;
   let playerRef: VideoPlayer | null = null;
   let currentTime = 0;
+  let showSearch = false;
+  let showBurnSheet = false;
 
   onMount(async () => {
     try {
@@ -24,6 +28,13 @@
       loading = false;
     }
   });
+
+  async function handleBurnClick() {
+    showBurnSheet = true;
+    try {
+      await api.triggerBurn(jobId);
+    } catch {}
+  }
 </script>
 
 <div class="min-h-screen px-6 py-8 max-w-7xl mx-auto">
@@ -45,10 +56,33 @@
         <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark">
           {job.duration_sec?.toFixed(0) ?? '?'}초 · {job.language ?? '?'} · {job.model_name} · {segments.length}개 세그먼트
         </div>
+        <DownloadBar {jobId} onBurnClick={handleBurnClick} />
+        {#if showBurnSheet}
+          <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark">
+            영상 인코딩 중이에요. 잠시 후 다운로드 링크가 준비됩니다.
+          </div>
+        {/if}
       </div>
 
       <aside class="card p-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
-        <div class="text-title mb-4">자막</div>
+        <div class="flex items-center justify-between mb-4">
+          <div class="text-title">자막</div>
+          <button
+            type="button"
+            class="text-caption text-brand"
+            on:click={() => (showSearch = !showSearch)}
+          >찾아 바꾸기</button>
+        </div>
+        {#if showSearch}
+          <div class="mb-4">
+            <SearchReplace
+              {jobId}
+              on:applied={async () => {
+                segments = await api.segments(jobId);
+              }}
+            />
+          </div>
+        {/if}
         <SegmentList
           {jobId}
           {segments}
