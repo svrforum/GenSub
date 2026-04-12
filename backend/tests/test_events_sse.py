@@ -27,16 +27,15 @@ def test_events_streams_progress_and_closes_on_terminal_state(tmp_path, monkeypa
         s.add(job)
         s.commit()
 
-    with TestClient(app) as client:
-        with client.stream("GET", f"/api/jobs/{job_id}/events") as resp:
-            assert resp.status_code == 200
-            got_progress = False
-            got_done = False
-            for line in resp.iter_lines():
-                if line.startswith("event: progress"):
-                    got_progress = True
-                if line.startswith("event: done"):
-                    got_done = True
-                    break
-            assert got_progress
-            assert got_done
+    with TestClient(app) as client, client.stream("GET", f"/api/jobs/{job_id}/events") as resp:
+        assert resp.status_code == 200
+        got_progress = False
+        got_done = False
+        for line in resp.iter_lines():
+            if line.startswith("event: progress"):
+                got_progress = True
+            if line.startswith("event: done"):
+                got_done = True
+                break
+        assert got_progress
+        assert got_done

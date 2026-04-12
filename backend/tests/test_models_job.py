@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlmodel import Session, SQLModel, create_engine
 
@@ -17,7 +17,7 @@ def test_job_creation_and_persistence():
             model_name="small",
             status=JobStatus.pending,
             progress=0.0,
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+            expires_at=datetime.now(UTC) + timedelta(hours=24),
         )
         session.add(job)
         session.commit()

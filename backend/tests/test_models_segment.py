@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlmodel import Session, SQLModel, create_engine, select
 
@@ -16,7 +16,7 @@ def test_segment_belongs_to_job():
             source_kind="upload",
             model_name="small",
             status=JobStatus.ready,
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
         )
         s.add(job)
         s.add(Segment(job_id="j1", idx=0, start=0.0, end=3.5, text="안녕하세요", avg_logprob=-0.2))
