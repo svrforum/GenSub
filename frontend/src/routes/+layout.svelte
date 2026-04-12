@@ -3,6 +3,9 @@
   import { onMount } from 'svelte';
   import { initTheme } from '$lib/theme';
   import { initHistory } from '$lib/stores/history';
+  import Header from '$lib/ui/Header.svelte';
+
+  let recentOpen = false;
 
   onMount(() => {
     initTheme();
@@ -10,4 +13,8 @@
   });
 </script>
 
-<slot />
+<Header onRecentClick={() => (recentOpen = !recentOpen)} />
+
+<main class="pt-16">
+  <slot />
+</main>
