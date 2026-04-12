@@ -1,6 +1,7 @@
 <script lang="ts">
   import IdleScreen from '$lib/screens/IdleScreen.svelte';
   import ProcessingScreen from '$lib/screens/ProcessingScreen.svelte';
+  import ReadyScreen from '$lib/screens/ReadyScreen.svelte';
   import { current } from '$lib/stores/current';
 
   function getJobId(): string | undefined {
@@ -16,9 +17,7 @@
 {:else if $current.screen === 'processing' && jobId}
   <ProcessingScreen {jobId} />
 {:else if $current.screen === 'ready' && jobId}
-  <div class="min-h-screen flex items-center justify-center">
-    <p class="text-body">Ready (Phase 12에서 구현)</p>
-  </div>
+  <ReadyScreen {jobId} />
 {:else if $current.screen === 'error'}
   <div class="min-h-screen flex items-center justify-center">
     <div class="text-center">

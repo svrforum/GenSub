@@ -1,0 +1,56 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+
+  import { api } from '$lib/api/jobs';
+  import type { JobDto, SegmentDto } from '$lib/api/types';
+
+  export let jobId: string;
+
+  let job: JobDto | null = null;
+  let segments: SegmentDto[] = [];
+  let loading = true;
+  let errorText: string | null = null;
+
+  onMount(async () => {
+    try {
+      [job, segments] = await Promise.all([api.getJob(jobId), api.segments(jobId)]);
+    } catch (e) {
+      errorText = e instanceof Error ? e.message : '불러올 수 없어요';
+    } finally {
+      loading = false;
+    }
+  });
+</script>
+
+<div class="min-h-screen px-6 py-8 max-w-7xl mx-auto">
+  {#if loading}
+    <div class="text-center text-body">불러오고 있어요...</div>
+  {:else if errorText || !job}
+    <div class="text-center text-danger">{errorText ?? '데이터 없음'}</div>
+  {:else}
+    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-8">
+      <div class="flex flex-col gap-4">
+        <div class="card overflow-hidden aspect-video">
+          <div class="w-full h-full bg-black" />
+        </div>
+        <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark">
+          {job.duration_sec?.toFixed(0) ?? '?'}초 · {job.language ?? '?'} · {job.model_name} · {segments.length}개 세그먼트
+        </div>
+      </div>
+
+      <aside class="card p-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
+        <div class="text-title mb-4">자막</div>
+        <div class="space-y-2">
+          {#each segments as seg}
+            <div class="p-3 rounded-input">
+              <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark mb-1">
+                {seg.start.toFixed(2)} → {seg.end.toFixed(2)}
+              </div>
+              <div class="text-body">{seg.text}</div>
+            </div>
+          {/each}
+        </div>
+      </aside>
+    </div>
+  {/if}
+</div>
