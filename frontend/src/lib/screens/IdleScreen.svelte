@@ -70,9 +70,53 @@
   function handleKey(e: KeyboardEvent) {
     if (e.key === 'Enter') start();
   }
+
+  let dragActive = false;
+
+  function onDragOver(e: DragEvent) {
+    e.preventDefault();
+    dragActive = true;
+  }
+
+  function onDragLeave() {
+    dragActive = false;
+  }
+
+  async function onDrop(e: DragEvent) {
+    e.preventDefault();
+    dragActive = false;
+    const file = e.dataTransfer?.files[0];
+    if (!file) return;
+    busy = true;
+    errorText = null;
+    try {
+      const res = await api.uploadJob(file, model, language === 'auto' ? undefined : language);
+      pushHistory({ jobId: res.job_id, title: file.name, createdAt: new Date().toISOString() });
+      setCurrentJobId(res.job_id);
+      current.set({
+        screen: 'processing',
+        job: null,
+        progress: 0,
+        stageMessage: '준비하고 있어요',
+        errorMessage: null
+      });
+    } catch (err) {
+      errorText = err instanceof Error ? err.message : '업로드 실패';
+    } finally {
+      busy = false;
+    }
+  }
 </script>
 
-<div class="min-h-screen flex items-center justify-center px-6">
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<div
+  class="min-h-screen flex items-center justify-center px-6 transition-colors
+         {dragActive ? 'bg-brand/5' : ''}"
+  role="presentation"
+  on:dragover={onDragOver}
+  on:dragleave={onDragLeave}
+  on:drop={onDrop}
+>
   <div class="w-full max-w-2xl flex flex-col gap-12">
     <h1 class="text-display text-center">
       자막 만들 영상 주소를<br />알려주세요
