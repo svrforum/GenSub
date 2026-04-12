@@ -40,11 +40,6 @@ async def upload_job(
     settings = request.app.state.settings
     engine = request.app.state.engine
 
-    max_bytes = settings.max_upload_mb * 1024 * 1024
-    contents = await file.read()
-    if len(contents) > max_bytes:
-        raise HTTPException(status_code=413, detail=f"file exceeds {settings.max_upload_mb} MB")
-
     job, dest = jobs_service.create_job_from_upload(
         engine=engine,
         settings=settings,
@@ -53,7 +48,27 @@ async def upload_job(
         language=language,
         initial_prompt=initial_prompt,
     )
-    dest.write_bytes(contents)
+
+    # Stream file to disk in chunks instead of buffering the whole upload in memory
+    chunk_limit = settings.max_upload_mb * 1024 * 1024
+    size = 0
+    try:
+        with dest.open("wb") as f:
+            while chunk := await file.read(1024 * 1024):  # 1 MB chunks
+                size += len(chunk)
+                if size > chunk_limit:
+                    dest.unlink(missing_ok=True)
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"file exceeds {settings.max_upload_mb}MB limit",
+                    )
+                f.write(chunk)
+    except HTTPException:
+        raise
+    except Exception:
+        dest.unlink(missing_ok=True)
+        raise
+
     return {"job_id": job.id, "status": job.status.value}
 
 

@@ -75,7 +75,7 @@ def create_app() -> FastAPI:
             if full_path.startswith("api/"):
                 raise HTTPException(status_code=404)
             asset = static_path / full_path
-            if asset.is_file():
+            if asset.resolve().is_relative_to(static_path.resolve()) and asset.is_file():
                 return FileResponse(asset)
             return FileResponse(static_path / "index.html")
 

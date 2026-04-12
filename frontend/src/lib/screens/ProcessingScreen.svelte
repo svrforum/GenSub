@@ -112,8 +112,8 @@
 
         // Queue info for pending jobs
         if (evt.status === 'pending' && 'active_count' in evt) {
-          const active = (evt as any).active_count as number;
-          const ahead = (evt as any).ahead_count as number;
+          const active = evt.active_count ?? 0;
+          const ahead = evt.ahead_count ?? 0;
           if (active > 0) {
             queueMessage = '앞의 작업이 진행 중이에요. 잠시 기다려 주세요';
           } else if (ahead > 0) {

@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+from sqlalchemy import text
 from sqlalchemy.engine import Engine
 from sqlmodel import Session, select
 
@@ -13,19 +14,29 @@ def _now() -> datetime:
 def claim_next_pending_job(engine: Engine) -> Job | None:
     """원자적으로 pending 작업 하나를 집어 downloading으로 전환."""
     with Session(engine) as s:
-        row = s.exec(
-            select(Job).where(Job.status == JobStatus.pending).order_by(Job.created_at)
-        ).first()
-        if row is None:
-            return None
-        row.status = JobStatus.downloading
-        row.progress = 0.0
-        row.stage_message = "영상을 가져오고 있어요"
-        row.updated_at = _now()
-        s.add(row)
-        s.commit()
-        s.refresh(row)
-        return row
+        # BEGIN IMMEDIATE acquires a write lock before the SELECT,
+        # preventing two workers from claiming the same job concurrently.
+        s.exec(text("BEGIN IMMEDIATE"))
+        try:
+            row = s.exec(
+                select(Job)
+                .where(Job.status == JobStatus.pending)
+                .order_by(Job.created_at)
+            ).first()
+            if row is None:
+                s.rollback()
+                return None
+            row.status = JobStatus.downloading
+            row.progress = 0.0
+            row.stage_message = "영상을 가져오고 있어요"
+            row.updated_at = _now()
+            s.add(row)
+            s.commit()
+            s.refresh(row)
+            return row
+        except Exception:
+            s.rollback()
+            raise
 
 
 def update_progress(

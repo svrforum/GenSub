@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 ModelName = Literal["tiny", "base", "small", "medium", "large-v3"]
 
@@ -11,33 +11,14 @@ class JobCreateRequest(BaseModel):
     language: str | None = None
     initial_prompt: str | None = None
 
-
-class JobResponse(BaseModel):
-    id: str
-    source_url: str | None
-    source_kind: str
-    title: str | None
-    duration_sec: float | None
-    language: str | None
-    model_name: str
-    status: str
-    progress: float
-    stage_message: str | None
-    error_message: str | None
-    created_at: str
-    updated_at: str
-    expires_at: str
-    cancel_requested: bool
-
-
-class SegmentResponse(BaseModel):
-    idx: int
-    start: float
-    end: float
-    text: str
-    avg_logprob: float | None
-    no_speech_prob: float | None
-    edited: bool
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        if not v.startswith(("http://", "https://")):
+            raise ValueError("URL must start with http:// or https://")
+        return v
 
 
 class SegmentPatchRequest(BaseModel):
