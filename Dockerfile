@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:1.6
 
 # ---- Stage 1: Frontend 빌드 ----
-FROM node:20-alpine AS frontend-build
+FROM node:22-slim AS frontend-build
 WORKDIR /app
-COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci
+COPY frontend/package.json ./
+RUN npm install
 COPY frontend/ ./
-RUN npm run build
+RUN rm -rf node_modules/.cache && npm run build
 
 # ---- Stage 2: Python 런타임 ----
 FROM python:3.11-slim AS runtime
