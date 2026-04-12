@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse, PlainTextResponse, Response, Streami
 
 from app.core.settings import Settings
 from app.services import jobs as jobs_service
+from app.services.muxer import mux_video_with_subtitles
 from app.services.segments import load_segments
 from app.services.subtitles import format_json, format_txt
 
@@ -126,4 +127,46 @@ def get_json(job_id: str, request: Request) -> Response:
     return Response(
         content=format_json(segments),
         media_type="application/json; charset=utf-8",
+    )
+
+
+@router.get("/{job_id}/download/video+subs.mkv")
+def download_mkv(job_id: str, request: Request) -> FileResponse:
+    engine = request.app.state.engine
+    settings = request.app.state.settings
+
+    job = jobs_service.get_job(engine, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="job not found")
+
+    media_dir = settings.media_dir / job_id
+    srt = media_dir / "subtitles.srt"
+    if not srt.exists():
+        raise HTTPException(status_code=404, detail="subtitles not ready")
+    src = _resolve_source(settings, job_id)
+    output = media_dir / "video+subs.mkv"
+
+    mux_video_with_subtitles(
+        video=src,
+        subtitle=srt,
+        output=output,
+        language=job.language or "und",
+    )
+    return FileResponse(
+        output,
+        media_type="video/x-matroska",
+        headers={"Content-Disposition": 'attachment; filename="video+subs.mkv"'},
+    )
+
+
+@router.get("/{job_id}/download/burned.mp4")
+def download_burned(job_id: str, request: Request) -> FileResponse:
+    settings = request.app.state.settings
+    path = settings.media_dir / job_id / "burned.mp4"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="burned file not ready")
+    return FileResponse(
+        path,
+        media_type="video/mp4",
+        filename="burned.mp4",
     )
