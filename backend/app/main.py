@@ -8,6 +8,7 @@ from app.api.config import router as config_router
 from app.api.events import router as events_router
 from app.api.health import router as health_router
 from app.api.jobs import router as jobs_router
+from app.api.media import router as media_router
 from app.core.db import create_db_engine, init_db
 from app.core.settings import get_settings
 from app.services.cleanup import purge_expired_jobs, sweep_zombie_jobs
@@ -52,4 +53,5 @@ def create_app() -> FastAPI:
     app.include_router(config_router)
     app.include_router(jobs_router)
     app.include_router(events_router)
+    app.include_router(media_router)
     return app
