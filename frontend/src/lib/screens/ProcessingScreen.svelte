@@ -4,6 +4,7 @@
   import { api } from '$lib/api/jobs';
   import { subscribeJobEvents } from '$lib/api/events';
   import { current, reset } from '$lib/stores/current';
+  import { pushHistory } from '$lib/stores/history';
   import Button from '$lib/ui/Button.svelte';
   import CircularProgress from '$lib/ui/CircularProgress.svelte';
 
@@ -81,6 +82,9 @@
     try {
       const job = await api.getJob(jobId);
       title = job.title ?? job.source_url ?? '';
+      if (job.title) {
+        pushHistory({ jobId, title: job.title, createdAt: job.created_at });
+      }
       current.update((c) => ({
         ...c,
         job,

@@ -5,6 +5,7 @@
   import type { JobDto, SegmentDto } from '$lib/api/types';
   import DownloadBar from '$lib/ui/DownloadBar.svelte';
   import BurnSheet from '$lib/ui/BurnSheet.svelte';
+  import ClipSheet from '$lib/ui/ClipSheet.svelte';
   import SearchReplace from '$lib/ui/SearchReplace.svelte';
   import SegmentList from '$lib/ui/SegmentList.svelte';
   import VideoPlayer from '$lib/ui/VideoPlayer.svelte';
@@ -20,6 +21,7 @@
   let currentTime = 0;
   let showSearch = false;
   let showBurnSheet = false;
+  let showClipSheet = false;
   let unshort: (() => void) | null = null;
 
   onMount(async () => {
@@ -87,7 +89,7 @@
         <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark">
           {job.duration_sec?.toFixed(0) ?? '?'}초 · {job.language ?? '?'} · {job.model_name} · {segments.length}개 세그먼트
         </div>
-        <DownloadBar {jobId} onBurnClick={handleBurnClick} />
+        <DownloadBar {jobId} onBurnClick={handleBurnClick} onClipClick={() => (showClipSheet = true)} />
       </div>
 
       <aside class="card p-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
@@ -124,4 +126,12 @@
   open={showBurnSheet}
   {jobId}
   onClose={() => (showBurnSheet = false)}
+/>
+
+<ClipSheet
+  open={showClipSheet}
+  {jobId}
+  durationSec={job?.duration_sec ?? 0}
+  {currentTime}
+  onClose={() => (showClipSheet = false)}
 />

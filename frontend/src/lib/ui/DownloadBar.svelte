@@ -4,6 +4,7 @@
 
   export let jobId: string;
   export let onBurnClick: () => void = () => {};
+  export let onClipClick: () => void = () => {};
 </script>
 
 <div class="flex flex-wrap items-center gap-2">
@@ -17,7 +18,8 @@
      href={api.jsonUrl(jobId)} download>.json</a>
   <a class="px-3 py-2 rounded-badge bg-divider-light dark:bg-surface-dark-elevated text-caption"
      href={api.mkvUrl(jobId)} download>.mkv</a>
-  <div class="ml-auto">
+  <div class="ml-auto flex items-center gap-2">
+    <Button variant="secondary" on:click={onClipClick}>구간 다운로드</Button>
     <Button variant="primary" on:click={onBurnClick}>영상에 구워서 다운로드</Button>
   </div>
 </div>
