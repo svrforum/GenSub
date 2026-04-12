@@ -14,18 +14,22 @@ class SegmentData:
 
 
 def _ts_srt(t: float) -> str:
-    h = int(t // 3600)
-    m = int((t % 3600) // 60)
-    s = int(t % 60)
-    ms = int(round((t - int(t)) * 1000))
+    total_ms = int(round(t * 1000))
+    if total_ms < 0:
+        total_ms = 0
+    h, rem = divmod(total_ms, 3_600_000)
+    m, rem = divmod(rem, 60_000)
+    s, ms = divmod(rem, 1000)
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 
 def _ts_vtt(t: float) -> str:
-    h = int(t // 3600)
-    m = int((t % 3600) // 60)
-    s = int(t % 60)
-    ms = int(round((t - int(t)) * 1000))
+    total_ms = int(round(t * 1000))
+    if total_ms < 0:
+        total_ms = 0
+    h, rem = divmod(total_ms, 3_600_000)
+    m, rem = divmod(rem, 60_000)
+    s, ms = divmod(rem, 1000)
     return f"{h:02d}:{m:02d}:{s:02d}.{ms:03d}"
 
 
