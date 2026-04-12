@@ -19,6 +19,30 @@
     burning: '자막을 영상에 입히고 있어요'
   };
 
+  const rotatingCopy: Record<string, string[]> = {
+    pending: ['준비하고 있어요', '잠시만요'],
+    downloading: ['영상을 가져오고 있어요', '네트워크에서 받는 중이에요', '거의 다 왔어요'],
+    transcribing: [
+      '음성을 듣고 있어요',
+      '단어를 받아쓰고 있어요',
+      '타임스탬프를 맞추고 있어요'
+    ],
+    burning: [
+      '자막을 영상에 입히고 있어요',
+      '프레임마다 자막을 그리고 있어요',
+      '거의 끝났어요'
+    ]
+  };
+
+  let rotationTimer: ReturnType<typeof setInterval> | null = null;
+  let rotationIdx = 0;
+
+  function applyRotatingCopy(status: string) {
+    const arr = rotatingCopy[status];
+    if (!arr) return;
+    current.update((c) => ({ ...c, stageMessage: arr[rotationIdx % arr.length] }));
+  }
+
   onMount(async () => {
     try {
       const job = await api.getJob(jobId);
@@ -34,10 +58,12 @@
 
     unsubscribe = subscribeJobEvents(jobId, {
       onProgress(evt) {
+        rotationIdx = 0;
         current.update((c) => ({
           ...c,
           progress: evt.progress,
-          stageMessage: evt.stage_message ?? stageCopy[evt.status] ?? c.stageMessage
+          stageMessage: evt.stage_message ?? stageCopy[evt.status] ?? c.stageMessage,
+          job: c.job ? { ...c.job, status: evt.status } : c.job
         }));
       },
       onDone(status) {
@@ -49,10 +75,17 @@
         current.update((c) => ({ ...c, screen: 'error', errorMessage: message }));
       }
     });
+
+    rotationTimer = setInterval(() => {
+      rotationIdx += 1;
+      const st = $current.job?.status ?? 'pending';
+      applyRotatingCopy(st);
+    }, 10000);
   });
 
   onDestroy(() => {
     unsubscribe?.();
+    if (rotationTimer) clearInterval(rotationTimer);
   });
 
   async function cancel() {
