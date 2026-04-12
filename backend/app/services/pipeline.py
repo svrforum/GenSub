@@ -6,9 +6,11 @@ from sqlmodel import Session
 from app.core.settings import Settings
 from app.models.job import Job, JobStatus
 from app.services import job_state
+from app.services.ass_style import BurnStyle, srt_segments_to_ass
 from app.services.audio import extract_audio
+from app.services.burn import burn_video
 from app.services.downloader import download_video
-from app.services.segments import replace_all_segments
+from app.services.segments import load_segments, replace_all_segments
 from app.services.subtitles import SegmentData, format_srt, format_vtt
 from app.services.transcriber import transcribe
 
@@ -96,5 +98,50 @@ def process_job(settings: Settings, engine: Engine, job_id: str) -> None:
 
     except JobCancelledError:
         job_state.mark_failed(engine, job_id, "사용자가 작업을 취소했어요")
+    except Exception as exc:
+        job_state.mark_failed(engine, job_id, str(exc))
+
+
+def process_burn_job(
+    settings: Settings,
+    engine: Engine,
+    job_id: str,
+    style: BurnStyle | None = None,
+) -> None:
+    media_dir = settings.media_dir / job_id
+
+    try:
+        with Session(engine) as s:
+            job = s.get(Job, job_id)
+            if job is None:
+                return
+            duration = job.duration_sec or 1.0
+
+        source_candidates = list(media_dir.glob("source.*"))
+        if not source_candidates:
+            raise RuntimeError("source video missing")
+        source = source_candidates[0]
+
+        segments = load_segments(engine, job_id)
+        ass_path = media_dir / "subtitles.ass"
+        ass_path.write_text(
+            srt_segments_to_ass(segments, style or BurnStyle()),
+            encoding="utf-8",
+        )
+
+        job_state.update_progress(engine, job_id, 0.0, "자막을 영상에 입히고 있어요")
+
+        def burn_progress(pct: float) -> None:
+            job_state.update_progress(engine, job_id, pct)
+
+        output = media_dir / "burned.mp4"
+        burn_video(
+            video=source,
+            ass=ass_path,
+            output=output,
+            total_duration_sec=duration,
+            progress_callback=burn_progress,
+        )
+        job_state.mark_done(engine, job_id)
     except Exception as exc:
         job_state.mark_failed(engine, job_id, str(exc))
