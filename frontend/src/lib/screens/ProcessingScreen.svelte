@@ -125,7 +125,15 @@
           queueMessage = null;
         }
       },
-      onDone(status) {
+      async onDone(status) {
+        // Fetch final job to get title for history
+        try {
+          const finalJob = await api.getJob(jobId);
+          if (finalJob.title) {
+            pushHistory({ jobId, title: finalJob.title, createdAt: finalJob.created_at });
+          }
+        } catch {}
+
         if (status === 'done') {
           current.update((c) => ({ ...c, screen: 'burn_done', progress: 1 }));
         } else if (status === 'ready') {
