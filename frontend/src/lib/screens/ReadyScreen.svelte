@@ -6,7 +6,6 @@
   import DownloadBar from '$lib/ui/DownloadBar.svelte';
   import BurnSheet from '$lib/ui/BurnSheet.svelte';
   import ClipSheet from '$lib/ui/ClipSheet.svelte';
-  import SearchReplace from '$lib/ui/SearchReplace.svelte';
   import SegmentList from '$lib/ui/SegmentList.svelte';
   import VideoPlayer from '$lib/ui/VideoPlayer.svelte';
   import { installShortcuts } from './useShortcuts';
@@ -19,7 +18,6 @@
   let errorText: string | null = null;
   let playerRef: VideoPlayer | null = null;
   let currentTime = 0;
-  let showSearch = false;
   let showBurnSheet = false;
   let showClipSheet = false;
   let unshort: (() => void) | null = null;
@@ -49,15 +47,8 @@
         const t = Math.max(0, currentTime + d);
         playerRef?.seekTo(t);
       },
-      regenerateCurrent: async () => {
-        const i = segments.findIndex((s) => currentTime >= s.start && currentTime < s.end);
-        if (i < 0) return;
-        try {
-          await api.regenerateSegment(jobId, segments[i].idx);
-          segments = await api.segments(jobId);
-        } catch {}
-      },
-      toggleSearch: () => (showSearch = !showSearch)
+      regenerateCurrent: () => {},
+      toggleSearch: () => {}
     });
   });
 
@@ -95,37 +86,20 @@
       <aside class="card p-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
         <div class="flex items-center justify-between mb-4">
           <div class="text-title">자막</div>
-          <div class="flex items-center gap-3">
-            <button
-              type="button"
-              class="text-caption text-text-secondary-light dark:text-text-secondary-dark hover:text-brand transition-colors"
-              on:click={() => {
-                const text = segments.map((s) => s.text).join('\n');
-                const sl = job?.language || 'auto';
-                const tl = sl === 'ko' ? 'en' : 'ko';
-                window.open(
-                  `https://translate.google.com/?sl=${sl}&tl=${tl}&text=${encodeURIComponent(text)}&op=translate`,
-                  '_blank'
-                );
-              }}
-            >🌐 번역</button>
-            <button
-              type="button"
-              class="text-caption text-brand"
-              on:click={() => (showSearch = !showSearch)}
-            >찾아 바꾸기</button>
-          </div>
+          <button
+            type="button"
+            class="text-caption text-text-secondary-light dark:text-text-secondary-dark hover:text-brand transition-colors"
+            on:click={() => {
+              const text = segments.map((s) => s.text).join('\n');
+              const sl = job?.language || 'auto';
+              const tl = sl === 'ko' ? 'en' : 'ko';
+              window.open(
+                `https://translate.google.com/?sl=${sl}&tl=${tl}&text=${encodeURIComponent(text)}&op=translate`,
+                '_blank'
+              );
+            }}
+          >🌐 전체 번역</button>
         </div>
-        {#if showSearch}
-          <div class="mb-4">
-            <SearchReplace
-              {jobId}
-              on:applied={async () => {
-                segments = await api.segments(jobId);
-              }}
-            />
-          </div>
-        {/if}
         <SegmentList
           {jobId}
           {segments}
