@@ -4,7 +4,10 @@
   import { Menu, Moon, Sun } from 'lucide-svelte';
   import { initTheme, theme, toggleTheme } from '$lib/theme';
   import { initHistory } from '$lib/stores/history';
+  import { current } from '$lib/stores/current';
   import Sidebar from '$lib/ui/Sidebar.svelte';
+
+  $: isProcessing = $current.screen === 'processing';
 
   let sidebarCollapsed = false;
 
@@ -18,6 +21,11 @@
 </script>
 
 <Sidebar collapsed={sidebarCollapsed} onToggle={() => (sidebarCollapsed = !sidebarCollapsed)} />
+
+<!-- 처리 중일 때 사이드바/헤더 클릭 차단 -->
+{#if isProcessing && !sidebarCollapsed}
+  <div class="fixed top-0 left-0 w-[260px] bottom-0 z-30 bg-black/5 dark:bg-white/5 cursor-not-allowed" />
+{/if}
 
 <header
   class="fixed top-0 z-10 flex items-center justify-between px-5 h-14 transition-all duration-300 ease-spring

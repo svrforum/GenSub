@@ -108,6 +108,7 @@
   }
 
   $: activeJobId = $current.jobId;
+  $: isProcessing = $current.screen === 'processing';
   $: groups = groupByDate($history);
 
   let ttlDays = 7;
@@ -237,6 +238,39 @@
       {/each}
     {/if}
   </nav>
+
+  <!-- 백그라운드 작업 상태 -->
+  {#if isProcessing}
+    <div class="shrink-0 border-t border-black/5 dark:border-white/5 px-3 py-3">
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <div
+        class="flex items-center gap-3 px-2 py-2 rounded-lg
+               bg-brand/5 cursor-pointer hover:bg-brand/10 transition-colors"
+        on:click={() => {
+          if ($current.jobId) openJob($current.jobId);
+        }}
+      >
+        <div class="relative w-5 h-5 shrink-0">
+          <svg class="w-5 h-5 -rotate-90" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="8" fill="none" stroke-width="2"
+                    class="stroke-brand/20" />
+            <circle cx="10" cy="10" r="8" fill="none" stroke-width="2"
+                    class="stroke-brand" stroke-linecap="round"
+                    stroke-dasharray={50.3}
+                    stroke-dashoffset={50.3 * (1 - $current.progress)} />
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-[12px] font-medium text-brand truncate">
+            {$current.stageMessage || '처리 중...'}
+          </div>
+          <div class="text-[11px] text-text-secondary-light dark:text-text-secondary-dark">
+            {Math.round($current.progress * 100)}%
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
 
   <!-- 하단 설정 -->
   <div class="shrink-0 border-t border-black/5 dark:border-white/5 px-3 py-3">
