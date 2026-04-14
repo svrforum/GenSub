@@ -35,7 +35,7 @@
   {#each segments as seg, i (seg.idx)}
     <div
       data-idx={i}
-      class="w-full text-left p-3 rounded-input transition-all
+      class="group w-full text-left p-3 rounded-input transition-all
              {activeIdx === i
                ? 'bg-brand/10 border-l-4 border-brand scale-[1.02]'
                : 'hover:bg-divider-light dark:hover:bg-surface-dark-elevated'}
@@ -70,11 +70,27 @@
           on:cancel={() => (editingIdx = null)}
         />
       {:else}
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <span
-          class="text-body cursor-text block"
-          on:dblclick|stopPropagation={() => (editingIdx = i)}
-        >{seg.text}</span>
+        <div class="flex items-start gap-1.5">
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <span
+            class="text-body cursor-text block flex-1"
+            on:dblclick|stopPropagation={() => (editingIdx = i)}
+          >{seg.text}</span>
+          <a
+            href="https://translate.google.com/?sl=auto&tl=ko&text={encodeURIComponent(seg.text)}&op=translate"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="shrink-0 mt-0.5 opacity-0 group-hover:opacity-60 hover:!opacity-100
+                   text-text-secondary-light dark:text-text-secondary-dark transition-opacity"
+            title="이 구간 번역하기"
+            on:click|stopPropagation
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6" />
+            </svg>
+          </a>
+        </div>
       {/if}
       {#if activeIdx === i}
         <div class="flex gap-2 mt-2 text-caption flex-wrap">
