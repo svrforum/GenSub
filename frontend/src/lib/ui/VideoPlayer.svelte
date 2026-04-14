@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+
   export let src: string;
   export let vttSrc: string;
   export let currentTime = 0;
@@ -23,12 +25,7 @@
     currentTime = videoEl?.currentTime ?? 0;
   }
 
-  function handleError() {
-    onError?.();
-  }
-
-  // video 클릭 시 포커스가 video로 가면 단축키가 안 먹으므로
-  // 클릭 후 포커스를 body로 되돌림
+  // video 클릭 시 포커스를 되돌림
   function handleClick() {
     setTimeout(() => {
       if (document.activeElement === videoEl) {
@@ -36,6 +33,28 @@
       }
     }, 0);
   }
+
+  // source 로드 실패 감지: networkState로 판단
+  onMount(() => {
+    if (!videoEl) return;
+    const checkError = () => {
+      // networkState 3 = NETWORK_NO_SOURCE
+      if (videoEl.networkState === 3 || videoEl.error) {
+        onError?.();
+      }
+    };
+    videoEl.addEventListener('error', checkError);
+    // source 에러는 video로 안 올라오므로 loadeddata 실패 시 타임아웃으로 감지
+    const timer = setTimeout(() => {
+      if (videoEl && videoEl.readyState === 0 && videoEl.networkState !== 2) {
+        onError?.();
+      }
+    }, 5000);
+    return () => {
+      videoEl?.removeEventListener('error', checkError);
+      clearTimeout(timer);
+    };
+  });
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -43,7 +62,6 @@
   <video
     bind:this={videoEl}
     on:timeupdate={onTimeUpdate}
-    on:error={handleError}
     class="w-full h-full bg-black"
     controls
     preload="metadata"
