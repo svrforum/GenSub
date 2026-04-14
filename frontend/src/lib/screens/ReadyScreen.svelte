@@ -95,11 +95,26 @@
       <aside class="card p-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
         <div class="flex items-center justify-between mb-4">
           <div class="text-title">자막</div>
-          <button
-            type="button"
-            class="text-caption text-brand"
-            on:click={() => (showSearch = !showSearch)}
-          >찾아 바꾸기</button>
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              class="text-caption text-text-secondary-light dark:text-text-secondary-dark hover:text-brand transition-colors"
+              on:click={() => {
+                const text = segments.map((s) => s.text).join('\n');
+                const sl = job?.language || 'auto';
+                const tl = sl === 'ko' ? 'en' : 'ko';
+                window.open(
+                  `https://translate.google.com/?sl=${sl}&tl=${tl}&text=${encodeURIComponent(text)}&op=translate`,
+                  '_blank'
+                );
+              }}
+            >🌐 번역</button>
+            <button
+              type="button"
+              class="text-caption text-brand"
+              on:click={() => (showSearch = !showSearch)}
+            >찾아 바꾸기</button>
+          </div>
         </div>
         {#if showSearch}
           <div class="mb-4">
