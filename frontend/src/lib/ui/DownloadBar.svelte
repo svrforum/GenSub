@@ -20,6 +20,6 @@
      href={api.mkvUrl(jobId)} download>.mkv</a>
   <div class="ml-auto flex items-center gap-2">
     <Button variant="secondary" on:click={onClipClick}>구간 다운로드</Button>
-    <Button variant="primary" on:click={onBurnClick}>영상에 구워서 다운로드</Button>
+    <Button variant="primary" on:click={onBurnClick}>다운로드</Button>
   </div>
 </div>
