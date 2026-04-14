@@ -39,22 +39,23 @@
     return seg.avg_logprob < -1.0;
   }
 
-  function handleSegClick(i: number, e: MouseEvent) {
+  function handleClick(i: number, e: MouseEvent) {
     if (e.ctrlKey || e.metaKey) {
-      // Ctrl/Cmd + 클릭: 토글 선택
+      e.preventDefault();
       selectedIndices = new Set(selectedIndices);
       if (selectedIndices.has(i)) selectedIndices.delete(i);
       else selectedIndices.add(i);
       lastClickedIdx = i;
     } else if (e.shiftKey && lastClickedIdx !== null) {
-      // Shift + 클릭: 범위 선택
+      e.preventDefault();
       const from = Math.min(lastClickedIdx, i);
       const to = Math.max(lastClickedIdx, i);
       selectedIndices = new Set(selectedIndices);
       for (let j = from; j <= to; j++) selectedIndices.add(j);
     } else {
-      // 일반 클릭: 단일 선택 해제 후 점프
-      selectedIndices = new Set();
+      if (selectedIndices.size > 0) {
+        selectedIndices = new Set();
+      }
       lastClickedIdx = i;
       onJump(segments[i].start);
     }
@@ -67,7 +68,7 @@
   function translateSelected() {
     const texts = [...selectedIndices]
       .sort((a, b) => a - b)
-      .map((i) => segments[i]?.text)
+      .map((idx) => segments[idx]?.text)
       .filter(Boolean)
       .join('\n');
     if (!texts) return;
@@ -107,55 +108,55 @@
   </div>
 {/if}
 
-<div bind:this={containerEl} class="space-y-2">
+<div bind:this={containerEl} class="space-y-1">
   {#each segments as seg, i (seg.idx)}
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
       data-idx={i}
-      class="group w-full text-left p-3 rounded-input transition-all
+      class="group w-full text-left p-3 rounded-xl cursor-pointer transition-all select-none
              {selectedIndices.has(i)
                ? 'bg-brand/10 ring-1 ring-brand/30'
                : activeIdx === i
-                 ? 'bg-brand/10 border-l-4 border-brand scale-[1.02]'
-                 : 'hover:bg-divider-light dark:hover:bg-surface-dark-elevated'}
+                 ? 'bg-brand/5 border-l-4 border-brand'
+                 : 'hover:bg-black/[0.03] dark:hover:bg-white/[0.03]'}
              {isLowConfidence(seg) ? 'bg-warning/10' : ''}"
+      on:click={(e) => handleClick(i, e)}
     >
-      <button
-        type="button"
-        on:click={(e) => handleSegClick(i, e)}
-        class="w-full text-left text-caption mb-1 flex items-center justify-between
-               text-text-secondary-light dark:text-text-secondary-dark
-               hover:text-brand dark:hover:text-brand-dark transition-colors group"
-      >
+      <div class="text-caption mb-1 flex items-center justify-between
+                  text-text-secondary-light dark:text-text-secondary-dark">
         <span class="flex items-center gap-1.5">
           {#if selectedIndices.has(i)}
-            <span class="text-brand">✓</span>
+            <span class="w-4 h-4 rounded bg-brand text-white flex items-center justify-center text-[10px]">✓</span>
           {:else}
-            <span class="opacity-50 group-hover:opacity-100 transition-opacity">▶</span>
+            <span class="opacity-40 group-hover:opacity-80 transition-opacity text-[11px]">▶</span>
           {/if}
           <span>{fmtTime(seg.start)} → {fmtTime(seg.end)}</span>
         </span>
         {#if seg.edited}
-          <span class="text-brand">편집됨</span>
+          <span class="text-brand text-[11px]">편집됨</span>
         {/if}
-      </button>
+      </div>
       {#if editingIdx === i}
-        <EditableSegment
-          value={seg.text}
-          editing={true}
-          on:save={async (e) => {
-            editingIdx = null;
-            try {
-              await api.patchSegment(jobId, seg.idx, { text: e.detail });
-              segments[i] = { ...seg, text: e.detail, edited: true };
-            } catch {}
-          }}
-          on:cancel={() => (editingIdx = null)}
-        />
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div on:click|stopPropagation>
+          <EditableSegment
+            value={seg.text}
+            editing={true}
+            on:save={async (e) => {
+              editingIdx = null;
+              try {
+                await api.patchSegment(jobId, seg.idx, { text: e.detail });
+                segments[i] = { ...seg, text: e.detail, edited: true };
+              } catch {}
+            }}
+            on:cancel={() => (editingIdx = null)}
+          />
+        </div>
       {:else}
         <div class="flex items-start gap-1.5">
           <!-- svelte-ignore a11y-no-static-element-interactions -->
           <span
-            class="text-body cursor-text block flex-1"
+            class="text-body block flex-1"
             on:dblclick|stopPropagation={() => (editingIdx = i)}
           >{seg.text}</span>
           <a
@@ -180,7 +181,7 @@
             class="text-caption px-2.5 py-1 rounded-lg
                    text-text-secondary-light dark:text-text-secondary-dark
                    hover:bg-divider-light dark:hover:bg-surface-dark-elevated transition-colors"
-            on:click={async () => {
+            on:click|stopPropagation={async () => {
               try {
                 await api.exportClip(jobId, seg.start, seg.end);
               } catch {}
