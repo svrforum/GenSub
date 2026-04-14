@@ -44,9 +44,14 @@
       <button
         type="button"
         on:click={() => onJump(seg.start)}
-        class="w-full text-left text-caption text-text-secondary-light dark:text-text-secondary-dark mb-1 flex justify-between"
+        class="w-full text-left text-caption mb-1 flex items-center justify-between
+               text-text-secondary-light dark:text-text-secondary-dark
+               hover:text-brand dark:hover:text-brand-dark transition-colors group"
       >
-        <span>{seg.start.toFixed(2)} → {seg.end.toFixed(2)}</span>
+        <span class="flex items-center gap-1.5">
+          <span class="opacity-50 group-hover:opacity-100 transition-opacity">▶</span>
+          <span>{seg.start.toFixed(2)} → {seg.end.toFixed(2)}</span>
+        </span>
         {#if seg.edited}
           <span class="text-brand">편집됨</span>
         {/if}
