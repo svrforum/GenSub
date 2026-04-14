@@ -25,6 +25,12 @@
     }
   }
 
+  function fmtTime(sec: number): string {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
   function isLowConfidence(seg: SegmentDto): boolean {
     if (seg.avg_logprob == null) return false;
     return seg.avg_logprob < -1.0;
@@ -50,7 +56,7 @@
       >
         <span class="flex items-center gap-1.5">
           <span class="opacity-50 group-hover:opacity-100 transition-opacity">▶</span>
-          <span>{seg.start.toFixed(2)} → {seg.end.toFixed(2)}</span>
+          <span>{fmtTime(seg.start)} → {fmtTime(seg.end)}</span>
         </span>
         {#if seg.edited}
           <span class="text-brand">편집됨</span>
