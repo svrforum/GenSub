@@ -8,6 +8,7 @@
     history,
     pushHistory,
     removeFromHistory,
+    renameHistory,
     type HistoryItem
   } from '$lib/stores/history';
 
@@ -53,13 +54,14 @@
 
   function startEdit(item: HistoryItem) {
     editingId = item.jobId;
-    editValue = item.title || '';
+    // 사용자가 직접 지은 이름이면 표시, 원제목과 같으면 빈값(placeholder로 원제목 보임)
+    editValue = item.title !== item.originalTitle ? (item.title || '') : '';
   }
 
   function saveEdit(item: HistoryItem) {
     const val = editValue.trim();
     if (val && val !== item.title) {
-      pushHistory({ ...item, title: val });
+      renameHistory(item.jobId, val);
     }
     editingId = null;
   }
@@ -170,7 +172,7 @@
                     on:blur={() => saveEdit(item)}
                     on:keydown={(e) => handleEditKey(e, item)}
                     autofocus
-                    placeholder={item.title || '제목 입력'}
+                    placeholder={item.originalTitle || item.title || '제목 입력'}
                     class="w-full bg-transparent text-sm outline-none
                            px-3 py-2 rounded-lg ring-1 ring-brand/50"
                   />

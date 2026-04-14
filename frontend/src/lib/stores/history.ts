@@ -6,6 +6,7 @@ const MAX = 10;
 export interface HistoryItem {
   jobId: string;
   title: string | null;
+  originalTitle?: string | null;
   createdAt: string;
 }
 
@@ -32,9 +33,24 @@ export function initHistory() {
 
 export function pushHistory(item: HistoryItem) {
   history.update((items) => {
-    const next = [item, ...items.filter((x) => x.jobId !== item.jobId)];
+    const existing = items.find((x) => x.jobId === item.jobId);
+    // 원제목 보존: 기존 항목에 originalTitle이 있으면 유지
+    const originalTitle =
+      item.originalTitle ?? existing?.originalTitle ?? existing?.title ?? item.title;
+    const merged = { ...item, originalTitle };
+    const next = [merged, ...items.filter((x) => x.jobId !== item.jobId)];
     save(next);
     return next.slice(0, MAX);
+  });
+}
+
+export function renameHistory(jobId: string, newTitle: string) {
+  history.update((items) => {
+    const next = items.map((x) =>
+      x.jobId === jobId ? { ...x, title: newTitle } : x
+    );
+    save(next);
+    return next;
   });
 }
 
