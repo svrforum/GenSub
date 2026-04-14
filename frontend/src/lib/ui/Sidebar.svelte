@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { Plus, ChevronLeft } from 'lucide-svelte';
+  import { onMount } from 'svelte';
+  import { PenLine, Plus, PanelLeftClose, Trash2 } from 'lucide-svelte';
 
   import { api } from '$lib/api/jobs';
   import { current, reset } from '$lib/stores/current';
@@ -17,8 +18,9 @@
   let editValue = '';
   let validating = false;
   let validated = false;
+  let hoveredId: string | null = null;
 
-  $: if (!collapsed) {
+  $: if (!collapsed && !validated) {
     validateOnce();
   }
 
@@ -27,9 +29,7 @@
     validating = true;
     validated = true;
     const items: HistoryItem[] = [];
-    const unsub = history.subscribe((h) => {
-      items.push(...h);
-    });
+    const unsub = history.subscribe((h) => { items.push(...h); });
     unsub();
     for (const item of items) {
       try {
@@ -46,55 +46,45 @@
 
   function openJob(jobId: string) {
     current.set({
-      screen: 'ready',
-      jobId,
-      job: null,
-      progress: 1,
-      stageMessage: '',
-      errorMessage: null
+      screen: 'ready', jobId, job: null,
+      progress: 1, stageMessage: '', errorMessage: null
     });
   }
 
   function startEdit(item: HistoryItem) {
     editingId = item.jobId;
-    editValue = item.title ?? item.jobId;
+    editValue = item.title || '';
   }
 
   function saveEdit(item: HistoryItem) {
-    if (editValue.trim()) {
-      pushHistory({ ...item, title: editValue.trim() });
+    const val = editValue.trim();
+    if (val && val !== item.title) {
+      pushHistory({ ...item, title: val });
     }
-    editingId = null;
-  }
-
-  function cancelEdit() {
     editingId = null;
   }
 
   function handleEditKey(e: KeyboardEvent, item: HistoryItem) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      saveEdit(item);
-    } else if (e.key === 'Escape') {
-      cancelEdit();
-    }
+    if (e.key === 'Enter') { e.preventDefault(); saveEdit(item); }
+    else if (e.key === 'Escape') { editingId = null; }
   }
 
-  // 날짜별 그룹핑
-  function groupByDate(items: HistoryItem[]): { label: string; items: HistoryItem[] }[] {
+  // 날짜 그룹
+  function groupByDate(items: HistoryItem[]) {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterday = new Date(today.getTime() - 86400000);
     const weekAgo = new Date(today.getTime() - 7 * 86400000);
-
+    const monthAgo = new Date(today.getTime() - 30 * 86400000);
     const groups: Map<string, HistoryItem[]> = new Map();
     for (const item of items) {
       const d = new Date(item.createdAt);
-      const itemDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
       let label: string;
-      if (itemDate >= today) label = '오늘';
-      else if (itemDate >= yesterday) label = '어제';
-      else if (itemDate >= weekAgo) label = '이번 주';
+      if (day >= today) label = '오늘';
+      else if (day >= yesterday) label = '어제';
+      else if (day >= weekAgo) label = '지난 7일';
+      else if (day >= monthAgo) label = '지난 30일';
       else label = `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
       if (!groups.has(label)) groups.set(label, []);
       groups.get(label)!.push(item);
@@ -105,140 +95,145 @@
   $: activeJobId = $current.jobId;
   $: groups = groupByDate($history);
 
-  let ttlDays = loadTtl();
-
-  function loadTtl(): number {
-    if (typeof localStorage === 'undefined') return 7;
-    const v = localStorage.getItem('gensub.settings.ttlDays');
-    return v ? parseInt(v, 10) : 7;
-  }
-
+  let ttlDays = 7;
+  onMount(() => {
+    if (typeof localStorage !== 'undefined') {
+      const v = localStorage.getItem('gensub.settings.ttlDays');
+      if (v) ttlDays = parseInt(v, 10);
+    }
+  });
   function saveTtl() {
-    if (typeof localStorage === 'undefined') return;
-    localStorage.setItem('gensub.settings.ttlDays', String(ttlDays));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('gensub.settings.ttlDays', String(ttlDays));
+    }
   }
 </script>
 
 <aside
   class="fixed top-0 left-0 bottom-0 z-20 flex flex-col
-         bg-bg-light dark:bg-bg-dark
-         transition-all duration-300 ease-spring
-         {collapsed ? 'w-0 overflow-hidden' : 'w-72'}
-         shadow-[1px_0_0_0] shadow-divider-light dark:shadow-divider-dark"
+         bg-[#f7f7f8] dark:bg-[#171717]
+         transition-all duration-200
+         {collapsed ? 'w-0 overflow-hidden' : 'w-[260px]'}"
 >
   <!-- 헤더 -->
-  <div class="flex items-center justify-between px-5 py-4 shrink-0">
+  <div class="flex items-center gap-2 px-3 h-14 shrink-0">
     <button
       type="button"
       on:click={reset}
-      class="text-body font-bold tracking-tight hover:opacity-60 transition-opacity"
-      aria-label="홈으로"
-    >GenSub</button>
-    <div class="flex items-center gap-1">
-      <button
-        type="button"
-        on:click={reset}
-        class="p-2 rounded-xl hover:bg-divider-light dark:hover:bg-surface-dark-elevated
-               text-text-secondary-light dark:text-text-secondary-dark transition-colors"
-        aria-label="새 작업"
-      >
-        <Plus size={18} strokeWidth={2.5} />
-      </button>
-      <button
-        type="button"
-        on:click={onToggle}
-        class="p-2 rounded-xl hover:bg-divider-light dark:hover:bg-surface-dark-elevated
-               text-text-secondary-light dark:text-text-secondary-dark transition-colors"
-        aria-label="사이드바 접기"
-      >
-        <ChevronLeft size={18} strokeWidth={2.5} />
-      </button>
-    </div>
+      class="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl
+             hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+    >
+      <div class="w-6 h-6 rounded-md bg-brand flex items-center justify-center">
+        <span class="text-white text-xs font-bold">G</span>
+      </div>
+      <span class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">새 자막</span>
+    </button>
+    <button
+      type="button"
+      on:click={onToggle}
+      class="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5
+             text-text-secondary-light dark:text-text-secondary-dark transition-colors"
+      aria-label="사이드바 접기"
+    >
+      <PanelLeftClose size={18} />
+    </button>
   </div>
 
-  <!-- 작업 리스트 -->
-  <nav class="flex-1 overflow-y-auto px-3 pb-4" aria-label="작업 이력">
-    {#if validating && $history.length === 0}
-      <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark px-2 py-8 text-center">
-        불러오는 중...
-      </div>
-    {:else if $history.length === 0}
-      <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark px-2 py-8 text-center">
+  <!-- 리스트 -->
+  <nav class="flex-1 overflow-y-auto px-2 pb-2" aria-label="작업 이력">
+    {#if $history.length === 0 && !validating}
+      <div class="text-[13px] text-text-secondary-light dark:text-text-secondary-dark px-3 py-6 text-center">
         아직 작업 이력이 없어요
       </div>
     {:else}
       {#each groups as group}
-        <div class="mt-4 first:mt-1">
-          <div class="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider
+        <div class="mt-5 first:mt-2">
+          <h3 class="px-3 pb-2 text-[11px] font-medium
                       text-text-secondary-light dark:text-text-secondary-dark">
             {group.label}
-          </div>
-          {#each group.items as item (item.jobId)}
-            <div
-              class="group relative flex items-center rounded-xl my-0.5 transition-all duration-150
-                     {activeJobId === item.jobId
-                       ? 'bg-surface-light dark:bg-surface-dark shadow-sm'
-                       : 'hover:bg-surface-light dark:hover:bg-surface-dark'}"
-            >
-              {#if editingId === item.jobId}
-                <!-- svelte-ignore a11y-autofocus -->
-                <input
-                  type="text"
-                  bind:value={editValue}
-                  on:blur={() => saveEdit(item)}
-                  on:keydown={(e) => handleEditKey(e, item)}
-                  autofocus
-                  class="flex-1 bg-transparent outline-none text-[14px] leading-snug
-                         px-3 py-2.5 rounded-xl ring-2 ring-brand"
-                />
-              {:else}
-                <!-- svelte-ignore a11y-no-static-element-interactions -->
-                <div
-                  class="flex-1 min-w-0 px-3 py-2.5 cursor-pointer"
-                  on:click={() => openJob(item.jobId)}
-                  on:dblclick|stopPropagation={() => startEdit(item)}
-                >
-                  <div class="truncate text-[14px] leading-snug
-                              {activeJobId === item.jobId
-                                ? 'font-semibold text-text-primary-light dark:text-text-primary-dark'
-                                : 'text-text-primary-light dark:text-text-primary-dark'}">
-                    {item.title ?? item.jobId}
+          </h3>
+          <ul class="space-y-0.5">
+            {#each group.items as item (item.jobId)}
+              <li
+                class="relative rounded-lg transition-colors duration-100
+                       {activeJobId === item.jobId
+                         ? 'bg-black/[0.07] dark:bg-white/[0.07]'
+                         : 'hover:bg-black/[0.04] dark:hover:bg-white/[0.04]'}"
+                on:mouseenter={() => (hoveredId = item.jobId)}
+                on:mouseleave={() => (hoveredId = null)}
+              >
+                {#if editingId === item.jobId}
+                  <!-- svelte-ignore a11y-autofocus -->
+                  <input
+                    type="text"
+                    bind:value={editValue}
+                    on:blur={() => saveEdit(item)}
+                    on:keydown={(e) => handleEditKey(e, item)}
+                    autofocus
+                    placeholder={item.title || '제목 입력'}
+                    class="w-full bg-transparent text-sm outline-none
+                           px-3 py-2 rounded-lg ring-1 ring-brand/50"
+                  />
+                {:else}
+                  <!-- svelte-ignore a11y-no-static-element-interactions -->
+                  <div
+                    class="flex items-center px-3 py-2 cursor-pointer"
+                    on:click={() => openJob(item.jobId)}
+                  >
+                    <span class="flex-1 truncate text-sm
+                                 {activeJobId === item.jobId ? 'font-medium' : ''}
+                                 {item.title ? 'text-text-primary-light dark:text-text-primary-dark' : 'text-text-secondary-light dark:text-text-secondary-dark italic'}">
+                      {item.title || '제목 없음'}
+                    </span>
                   </div>
-                </div>
-                <!-- 삭제: 호버 시 우측에 페이드인 -->
-                <button
-                  type="button"
-                  class="absolute right-1.5 top-1/2 -translate-y-1/2
-                         opacity-0 group-hover:opacity-100
-                         p-1.5 rounded-lg
-                         text-text-secondary-light dark:text-text-secondary-dark
-                         hover:text-danger hover:bg-danger/10
-                         transition-all duration-150"
-                  on:click|stopPropagation={() => removeFromHistory(item.jobId)}
-                  aria-label="삭제"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <path d="M18 6L6 18M6 6l12 12" />
-                  </svg>
-                </button>
-              {/if}
-            </div>
-          {/each}
+                  <!-- 호버 액션 -->
+                  {#if hoveredId === item.jobId || activeJobId === item.jobId}
+                    <div
+                      class="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5
+                             bg-[#f7f7f8] dark:bg-[#171717] rounded-lg pl-1
+                             {hoveredId === item.jobId ? 'opacity-100' : 'opacity-0'}
+                             transition-opacity duration-100"
+                    >
+                      <button
+                        type="button"
+                        class="p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/10
+                               text-text-secondary-light dark:text-text-secondary-dark transition-colors"
+                        on:click|stopPropagation={() => startEdit(item)}
+                        aria-label="이름 변경"
+                      >
+                        <PenLine size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        class="p-1.5 rounded-md hover:bg-danger/10 hover:text-danger
+                               text-text-secondary-light dark:text-text-secondary-dark transition-colors"
+                        on:click|stopPropagation={() => removeFromHistory(item.jobId)}
+                        aria-label="삭제"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  {/if}
+                {/if}
+              </li>
+            {/each}
+          </ul>
         </div>
       {/each}
     {/if}
   </nav>
 
-  <!-- 설정 -->
-  <div class="shrink-0 border-t border-divider-light dark:border-divider-dark p-4">
+  <!-- 하단 설정 -->
+  <div class="shrink-0 border-t border-black/5 dark:border-white/5 px-3 py-3">
     <div class="flex items-center justify-between">
-      <span class="text-caption text-text-secondary-light dark:text-text-secondary-dark">보관 기간</span>
+      <span class="text-[12px] text-text-secondary-light dark:text-text-secondary-dark">보관 기간</span>
       <select
         bind:value={ttlDays}
-        on:change={() => saveTtl()}
-        class="text-caption bg-transparent border border-divider-light dark:border-divider-dark
-               rounded-lg px-2 py-1.5 text-text-primary-light dark:text-text-primary-dark"
+        on:change={saveTtl}
+        class="text-[12px] bg-transparent rounded-md px-1.5 py-1
+               text-text-secondary-light dark:text-text-secondary-dark
+               hover:text-text-primary-light dark:hover:text-text-primary-dark
+               border-none outline-none cursor-pointer"
       >
         <option value={1}>1일</option>
         <option value={7}>7일</option>

@@ -21,7 +21,7 @@
 
 <header
   class="fixed top-0 z-10 flex items-center justify-between px-5 h-14 transition-all duration-300 ease-spring
-         {sidebarCollapsed ? 'left-0' : 'left-72'} right-0"
+         {sidebarCollapsed ? 'left-0' : 'left-[260px]'} right-0"
 >
   <div class="flex items-center gap-2">
     {#if sidebarCollapsed}
@@ -54,7 +54,7 @@
 
 <main
   class="pt-14 min-h-screen transition-all duration-300 ease-spring
-         {sidebarCollapsed ? 'ml-0' : 'ml-72'}"
+         {sidebarCollapsed ? 'ml-0' : 'ml-[260px]'}"
 >
   <slot />
 </main>
