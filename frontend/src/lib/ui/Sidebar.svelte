@@ -104,6 +104,19 @@
 
   $: activeJobId = $current.jobId;
   $: groups = groupByDate($history);
+
+  let ttlDays = loadTtl();
+
+  function loadTtl(): number {
+    if (typeof localStorage === 'undefined') return 7;
+    const v = localStorage.getItem('gensub.settings.ttlDays');
+    return v ? parseInt(v, 10) : 7;
+  }
+
+  function saveTtl() {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem('gensub.settings.ttlDays', String(ttlDays));
+  }
 </script>
 
 <aside
@@ -216,4 +229,22 @@
       {/each}
     {/if}
   </nav>
+
+  <!-- 설정 -->
+  <div class="shrink-0 border-t border-divider-light dark:border-divider-dark p-4">
+    <div class="flex items-center justify-between">
+      <span class="text-caption text-text-secondary-light dark:text-text-secondary-dark">보관 기간</span>
+      <select
+        bind:value={ttlDays}
+        on:change={() => saveTtl()}
+        class="text-caption bg-transparent border border-divider-light dark:border-divider-dark
+               rounded-lg px-2 py-1.5 text-text-primary-light dark:text-text-primary-dark"
+      >
+        <option value={1}>1일</option>
+        <option value={7}>7일</option>
+        <option value={30}>30일</option>
+        <option value={0}>무제한</option>
+      </select>
+    </div>
+  </div>
 </aside>

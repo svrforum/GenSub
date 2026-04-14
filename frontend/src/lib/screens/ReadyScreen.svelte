@@ -9,6 +9,7 @@
   import SegmentList from '$lib/ui/SegmentList.svelte';
   import VideoPlayer from '$lib/ui/VideoPlayer.svelte';
   import { installShortcuts } from './useShortcuts';
+  import { reset } from '$lib/stores/current';
 
   export let jobId: string;
 
@@ -21,6 +22,7 @@
   let showBurnSheet = false;
   let showClipSheet = false;
   let unshort: (() => void) | null = null;
+  let videoError = false;
 
   onMount(async () => {
     try {
@@ -69,14 +71,32 @@
   {:else}
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-8">
       <div class="flex flex-col gap-4">
-        <div class="card overflow-hidden aspect-video">
-          <VideoPlayer
-            bind:this={playerRef}
-            bind:currentTime
-            src={api.videoUrl(jobId)}
-            vttSrc={api.vttUrl(jobId)}
-          />
-        </div>
+        {#if videoError}
+          <div class="card aspect-video flex items-center justify-center">
+            <div class="text-center">
+              <div class="text-body text-text-secondary-light dark:text-text-secondary-dark mb-3">
+                영상 파일이 만료됐어요
+              </div>
+              <button
+                type="button"
+                on:click={reset}
+                class="px-4 py-2 rounded-xl bg-brand text-white text-body font-medium hover:opacity-80 transition-opacity"
+              >
+                새로 만들기
+              </button>
+            </div>
+          </div>
+        {:else}
+          <div class="card overflow-hidden aspect-video">
+            <VideoPlayer
+              bind:this={playerRef}
+              bind:currentTime
+              src={api.videoUrl(jobId)}
+              vttSrc={api.vttUrl(jobId)}
+              onError={() => (videoError = true)}
+            />
+          </div>
+        {/if}
         <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark">
           {job.duration_sec?.toFixed(0) ?? '?'}초 · {job.language ?? '?'} · {job.model_name} · {segments.length}개 세그먼트
         </div>

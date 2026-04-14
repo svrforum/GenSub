@@ -2,6 +2,7 @@
   export let src: string;
   export let vttSrc: string;
   export let currentTime = 0;
+  export let onError: (() => void) | undefined = undefined;
 
   let videoEl: HTMLVideoElement;
 
@@ -22,6 +23,10 @@
     currentTime = videoEl?.currentTime ?? 0;
   }
 
+  function handleError() {
+    onError?.();
+  }
+
   // video 클릭 시 포커스가 video로 가면 단축키가 안 먹으므로
   // 클릭 후 포커스를 body로 되돌림
   function handleClick() {
@@ -38,6 +43,7 @@
   <video
     bind:this={videoEl}
     on:timeupdate={onTimeUpdate}
+    on:error={handleError}
     class="w-full h-full bg-black"
     controls
     preload="metadata"
