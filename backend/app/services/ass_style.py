@@ -52,7 +52,7 @@ _V4_FORMAT_LINE = "Format: " + ", ".join(_V4_FORMAT_FIELDS)
 _STYLE_DEFAULT_LINE = (
     "Style: Default,{font},{size},"
     "&H00FFFFFF,&H000000FF,&H00000000,&H80000000,"
-    "0,0,0,0,100,100,0,0,1,{outline_thickness},0,2,40,40,60,1"
+    "0,0,0,0,100,100,0,0,1,{outline_thickness},0,2,40,40,40,1"
 )
 
 HEADER_TEMPLATE = (

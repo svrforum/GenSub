@@ -46,7 +46,7 @@ def format_srt(segments: Iterable[SegmentData]) -> str:
 def format_vtt(segments: Iterable[SegmentData]) -> str:
     lines = ["WEBVTT", ""]
     for seg in segments:
-        lines.append(f"{_ts_vtt(seg.start)} --> {_ts_vtt(seg.end)}")
+        lines.append(f"{_ts_vtt(seg.start)} --> {_ts_vtt(seg.end)} line:90%")
         lines.append(seg.text)
         lines.append("")
     return "\n".join(lines)
