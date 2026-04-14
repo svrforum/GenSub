@@ -19,6 +19,7 @@
   const languageOptions = [
     { value: 'auto', label: '자동 감지' },
     { value: 'ko', label: '한국어' },
+    { value: 'ko+en', label: '한영 혼합' },
     { value: 'en', label: 'English' },
     { value: 'ja', label: '日本語' },
     { value: 'zh', label: '中文' }

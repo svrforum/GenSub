@@ -81,13 +81,30 @@ def process_job(settings: Settings, engine: Engine, job_id: str) -> None:
         def tr_cancel_check() -> None:
             _check_cancel(engine, job_id)
 
+        # 한영 혼합 모드: language=None으로 auto-detect하되
+        # initial_prompt에 양쪽 언어 힌트를 넣어 code-switch 인식 개선
+        tr_language = language_override
+        tr_prompt = initial_prompt
+        if language_override and "+" in language_override:
+            tr_language = None  # auto-detect로 전환
+            langs = language_override.split("+")
+            hints = {
+                "ko": "안녕하세요. 이것은 한국어와 English가 섞인 영상입니다.",
+                "en": "Hello. This video contains both English and 한국어.",
+                "ja": "こんにちは。この動画には日本語とEnglishが含まれています。",
+                "zh": "你好。这个视频包含中文和English。",
+            }
+            prompt_parts = [hints.get(lang, "") for lang in langs]
+            mixed_hint = " ".join(p for p in prompt_parts if p)
+            tr_prompt = f"{mixed_hint} {initial_prompt or ''}".strip() or None
+
         tr_result = transcribe(
             audio_path=audio_path,
             model_name=model_name,
             compute_type=settings.compute_type,
             model_cache_dir=settings.model_cache_dir,
-            language=language_override,
-            initial_prompt=initial_prompt,
+            language=tr_language,
+            initial_prompt=tr_prompt,
             progress_callback=tr_progress,
             cancel_check=tr_cancel_check,
         )
