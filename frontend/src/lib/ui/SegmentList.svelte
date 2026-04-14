@@ -9,10 +9,13 @@
   export let segments: SegmentDto[] = [];
   export let currentTime = 0;
   export let onJump: (t: number) => void = () => {};
+  export let language: string | null = null;
 
   let activeIdx = -1;
   let editingIdx: number | null = null;
   let containerEl: HTMLDivElement;
+  let selectedIndices: Set<number> = new Set();
+  let lastClickedIdx: number | null = null;
 
   $: {
     const i = segments.findIndex((s) => currentTime >= s.start && currentTime < s.end);
@@ -35,27 +38,100 @@
     if (seg.avg_logprob == null) return false;
     return seg.avg_logprob < -1.0;
   }
+
+  function handleSegClick(i: number, e: MouseEvent) {
+    if (e.ctrlKey || e.metaKey) {
+      // Ctrl/Cmd + 클릭: 토글 선택
+      selectedIndices = new Set(selectedIndices);
+      if (selectedIndices.has(i)) selectedIndices.delete(i);
+      else selectedIndices.add(i);
+      lastClickedIdx = i;
+    } else if (e.shiftKey && lastClickedIdx !== null) {
+      // Shift + 클릭: 범위 선택
+      const from = Math.min(lastClickedIdx, i);
+      const to = Math.max(lastClickedIdx, i);
+      selectedIndices = new Set(selectedIndices);
+      for (let j = from; j <= to; j++) selectedIndices.add(j);
+    } else {
+      // 일반 클릭: 단일 선택 해제 후 점프
+      selectedIndices = new Set();
+      lastClickedIdx = i;
+      onJump(segments[i].start);
+    }
+  }
+
+  function clearSelection() {
+    selectedIndices = new Set();
+  }
+
+  function translateSelected() {
+    const texts = [...selectedIndices]
+      .sort((a, b) => a - b)
+      .map((i) => segments[i]?.text)
+      .filter(Boolean)
+      .join('\n');
+    if (!texts) return;
+    const sl = language || 'auto';
+    const tl = sl === 'ko' ? 'en' : 'ko';
+    window.open(
+      `https://translate.google.com/?sl=${sl}&tl=${tl}&text=${encodeURIComponent(texts)}&op=translate`,
+      '_blank'
+    );
+  }
+
+  $: hasSelection = selectedIndices.size > 0;
 </script>
+
+<!-- 선택 액션 바 -->
+{#if hasSelection}
+  <div class="sticky top-0 z-10 flex items-center justify-between gap-2
+              bg-brand/10 dark:bg-brand/20 backdrop-blur rounded-xl px-3 py-2 mb-2">
+    <span class="text-caption font-medium text-brand">
+      {selectedIndices.size}개 선택됨
+    </span>
+    <div class="flex items-center gap-1.5">
+      <button
+        type="button"
+        class="text-caption px-2.5 py-1 rounded-lg bg-brand text-white
+               hover:bg-brand-pressed transition-colors"
+        on:click={translateSelected}
+      >🌐 번역</button>
+      <button
+        type="button"
+        class="text-caption px-2.5 py-1 rounded-lg
+               text-text-secondary-light dark:text-text-secondary-dark
+               hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+        on:click={clearSelection}
+      >선택 해제</button>
+    </div>
+  </div>
+{/if}
 
 <div bind:this={containerEl} class="space-y-2">
   {#each segments as seg, i (seg.idx)}
     <div
       data-idx={i}
       class="group w-full text-left p-3 rounded-input transition-all
-             {activeIdx === i
-               ? 'bg-brand/10 border-l-4 border-brand scale-[1.02]'
-               : 'hover:bg-divider-light dark:hover:bg-surface-dark-elevated'}
+             {selectedIndices.has(i)
+               ? 'bg-brand/10 ring-1 ring-brand/30'
+               : activeIdx === i
+                 ? 'bg-brand/10 border-l-4 border-brand scale-[1.02]'
+                 : 'hover:bg-divider-light dark:hover:bg-surface-dark-elevated'}
              {isLowConfidence(seg) ? 'bg-warning/10' : ''}"
     >
       <button
         type="button"
-        on:click={() => onJump(seg.start)}
+        on:click={(e) => handleSegClick(i, e)}
         class="w-full text-left text-caption mb-1 flex items-center justify-between
                text-text-secondary-light dark:text-text-secondary-dark
                hover:text-brand dark:hover:text-brand-dark transition-colors group"
       >
         <span class="flex items-center gap-1.5">
-          <span class="opacity-50 group-hover:opacity-100 transition-opacity">▶</span>
+          {#if selectedIndices.has(i)}
+            <span class="text-brand">✓</span>
+          {:else}
+            <span class="opacity-50 group-hover:opacity-100 transition-opacity">▶</span>
+          {/if}
           <span>{fmtTime(seg.start)} → {fmtTime(seg.end)}</span>
         </span>
         {#if seg.edited}
@@ -98,7 +174,7 @@
           </a>
         </div>
       {/if}
-      {#if activeIdx === i}
+      {#if activeIdx === i && !hasSelection}
         <div class="mt-2">
           <button type="button"
             class="text-caption px-2.5 py-1 rounded-lg

@@ -125,6 +125,7 @@
           {segments}
           bind:currentTime
           onJump={(t) => playerRef?.seekTo(t)}
+          language={job?.language}
         />
       </aside>
     </div>
