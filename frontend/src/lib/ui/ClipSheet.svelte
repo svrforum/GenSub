@@ -2,6 +2,7 @@
   import { api } from '$lib/api/jobs';
   import BottomSheet from '$lib/ui/BottomSheet.svelte';
   import Button from '$lib/ui/Button.svelte';
+  import Segmented from '$lib/ui/Segmented.svelte';
 
   export let open = false;
   export let jobId: string;
@@ -14,10 +15,17 @@
   let endMin = 0;
   let endSec = 0;
   let burnSubs = true;
+  let size: string = '42';
+  let outline = true;
   let busy = false;
   let errorText: string | null = null;
 
-  // 시트가 열릴 때 현재 재생 위치를 시작으로, +30초를 끝으로 초기화
+  const sizeOptions = [
+    { value: '32', label: '작게' },
+    { value: '42', label: '중간' },
+    { value: '54', label: '크게' }
+  ];
+
   $: if (open) {
     const s = Math.floor(currentTime);
     startMin = Math.floor(s / 60);
@@ -44,7 +52,10 @@
     busy = true;
     errorText = null;
     try {
-      await api.exportClip(jobId, startTotal, endTotal, burnSubs);
+      await api.exportClip(jobId, startTotal, endTotal, burnSubs, {
+        size: parseInt(size, 10),
+        outline
+      });
     } catch (e) {
       errorText = e instanceof Error ? e.message : '다운로드 실패';
     } finally {
@@ -54,7 +65,7 @@
 </script>
 
 <BottomSheet {open} {onClose}>
-  <div class="flex flex-col gap-6 py-2">
+  <div class="flex flex-col gap-5 py-2">
     <div>
       <div class="text-title">구간 선택 다운로드</div>
       <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark mt-1">
@@ -62,49 +73,28 @@
       </div>
     </div>
 
+    <!-- 시간 선택 -->
     <div class="flex items-center gap-4">
       <div class="flex-1">
         <label class="text-caption text-text-secondary-light dark:text-text-secondary-dark mb-1 block">시작</label>
         <div class="flex items-center gap-1">
-          <input
-            type="number"
-            min="0"
-            max={Math.floor(durationSec / 60)}
-            bind:value={startMin}
-            class="w-16 px-2 py-2 bg-divider-light dark:bg-surface-dark-elevated rounded-input text-body text-center"
-          />
+          <input type="number" min="0" max={Math.floor(durationSec / 60)} bind:value={startMin}
+            class="w-16 px-2 py-2 bg-divider-light dark:bg-surface-dark-elevated rounded-input text-body text-center" />
           <span class="text-body">분</span>
-          <input
-            type="number"
-            min="0"
-            max="59"
-            bind:value={startSec}
-            class="w-16 px-2 py-2 bg-divider-light dark:bg-surface-dark-elevated rounded-input text-body text-center"
-          />
+          <input type="number" min="0" max="59" bind:value={startSec}
+            class="w-16 px-2 py-2 bg-divider-light dark:bg-surface-dark-elevated rounded-input text-body text-center" />
           <span class="text-body">초</span>
         </div>
       </div>
-
       <span class="text-title mt-5">→</span>
-
       <div class="flex-1">
         <label class="text-caption text-text-secondary-light dark:text-text-secondary-dark mb-1 block">끝</label>
         <div class="flex items-center gap-1">
-          <input
-            type="number"
-            min="0"
-            max={Math.floor(durationSec / 60)}
-            bind:value={endMin}
-            class="w-16 px-2 py-2 bg-divider-light dark:bg-surface-dark-elevated rounded-input text-body text-center"
-          />
+          <input type="number" min="0" max={Math.floor(durationSec / 60)} bind:value={endMin}
+            class="w-16 px-2 py-2 bg-divider-light dark:bg-surface-dark-elevated rounded-input text-body text-center" />
           <span class="text-body">분</span>
-          <input
-            type="number"
-            min="0"
-            max="59"
-            bind:value={endSec}
-            class="w-16 px-2 py-2 bg-divider-light dark:bg-surface-dark-elevated rounded-input text-body text-center"
-          />
+          <input type="number" min="0" max="59" bind:value={endSec}
+            class="w-16 px-2 py-2 bg-divider-light dark:bg-surface-dark-elevated rounded-input text-body text-center" />
           <span class="text-body">초</span>
         </div>
       </div>
@@ -117,6 +107,19 @@
         <span class="text-danger">유효하지 않은 구간이에요</span>
       {/if}
     </div>
+
+    <!-- 자막 옵션 -->
+    {#if burnSubs}
+      <div class="flex items-center justify-between">
+        <span class="text-body">자막 크기</span>
+        <Segmented options={sizeOptions} bind:value={size} />
+      </div>
+
+      <label class="flex items-center justify-between text-body">
+        <span>외곽선</span>
+        <input type="checkbox" bind:checked={outline} class="w-12 h-7 rounded-full" />
+      </label>
+    {/if}
 
     <label class="flex items-center justify-between text-body">
       <span>자막 포함</span>

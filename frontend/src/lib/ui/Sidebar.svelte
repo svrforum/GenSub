@@ -66,6 +66,19 @@
     editingId = null;
   }
 
+  async function confirmDelete(item: HistoryItem) {
+    const name = item.title || '이 작업';
+    if (!confirm(`"${name}"을(를) 삭제할까요?\n영상과 자막 파일도 함께 삭제돼요.`)) return;
+    try {
+      await api.deleteJob(item.jobId);
+    } catch {
+      // 이미 삭제된 경우 무시
+    }
+    removeFromHistory(item.jobId);
+    // 현재 보고 있는 작업이면 홈으로
+    if ($current.jobId === item.jobId) reset();
+  }
+
   function handleEditKey(e: KeyboardEvent, item: HistoryItem) {
     if (e.key === 'Enter') { e.preventDefault(); saveEdit(item); }
     else if (e.key === 'Escape') { editingId = null; }
@@ -209,7 +222,7 @@
                         type="button"
                         class="p-1.5 rounded-md hover:bg-danger/10 hover:text-danger
                                text-text-secondary-light dark:text-text-secondary-dark transition-colors"
-                        on:click|stopPropagation={() => removeFromHistory(item.jobId)}
+                        on:click|stopPropagation={() => confirmDelete(item)}
                         aria-label="삭제"
                       >
                         <Trash2 size={14} />
