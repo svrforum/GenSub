@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { Bookmark, PenLine, PanelLeftClose, Trash2 } from 'lucide-svelte';
 
-  import { api } from '$lib/api/jobs';
+  import { api, fetchConfig } from '$lib/api/jobs';
   import { current, reset } from '$lib/stores/current';
   import {
     history,
@@ -122,18 +122,15 @@
   $: isProcessing = $current.screen === 'processing';
   $: groups = groupByDate($history);
 
-  let ttlDays = 7;
-  onMount(() => {
-    if (typeof localStorage !== 'undefined') {
-      const v = localStorage.getItem('gensub.settings.ttlDays');
-      if (v) ttlDays = parseInt(v, 10);
+  let serverTtlHours: number | null = null;
+  onMount(async () => {
+    try {
+      const cfg = await fetchConfig();
+      serverTtlHours = cfg.job_ttl_hours;
+    } catch {
+      serverTtlHours = null;
     }
   });
-  function saveTtl() {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('gensub.settings.ttlDays', String(ttlDays));
-    }
-  }
 </script>
 
 <aside
@@ -298,21 +295,14 @@
 
   <!-- 하단 설정 -->
   <div class="shrink-0 border-t border-black/5 dark:border-white/5 px-3 py-3">
-    <div class="flex items-center justify-between">
-      <span class="text-[12px] text-text-secondary-light dark:text-text-secondary-dark">보관 기간</span>
-      <select
-        bind:value={ttlDays}
-        on:change={saveTtl}
-        class="text-[12px] bg-transparent rounded-md px-1.5 py-1
-               text-text-secondary-light dark:text-text-secondary-dark
-               hover:text-text-primary-light dark:hover:text-text-primary-dark
-               border-none outline-none cursor-pointer"
-      >
-        <option value={1}>1일</option>
-        <option value={7}>7일</option>
-        <option value={30}>30일</option>
-        <option value={0}>무제한</option>
-      </select>
+    <div class="text-[12px] leading-relaxed text-text-secondary-light dark:text-text-secondary-dark">
+      {#if serverTtlHours === null}
+        보관 기간 정보를 불러오는 중…
+      {:else}
+        작업은 <strong class="text-text-primary-light dark:text-text-primary-dark">{serverTtlHours}시간</strong> 후 자동 삭제됩니다.
+        <br />
+        북마크한 작업은 만료되지 않아요.
+      {/if}
     </div>
   </div>
 </aside>

@@ -42,7 +42,14 @@ def test_process_burn_creates_output_and_marks_done(tmp_path, monkeypatch):
     )
 
     with patch("app.services.pipeline.burn_video") as mock_burn:
-        def _fake(video, ass, output, total_duration_sec, progress_callback=None):
+        def _fake(
+            video,
+            ass,
+            output,
+            total_duration_sec,
+            progress_callback=None,
+            cancel_check=None,
+        ):
             output.write_bytes(b"burned")
             return output
         mock_burn.side_effect = _fake

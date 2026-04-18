@@ -1,3 +1,7 @@
+> ℹ️ **이 문서는 2026-04-11 시점의 초기 설계 명세**입니다. 설계 의도(왜 이렇게 만들었나)를 보존하기 위해 유지되지만, **현재 구현된 아키텍처는 [`docs/architecture.md`](../../architecture.md)를 참고**하세요. 2026-04-18의 안정성 리팩토링 스펙은 [`2026-04-18-stability-refactor-design.md`](2026-04-18-stability-refactor-design.md)에 있습니다.
+
+---
+
 # GenSub 설계 명세서
 
 **날짜**: 2026-04-11

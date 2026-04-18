@@ -49,7 +49,6 @@
         const t = Math.max(0, currentTime + d);
         playerRef?.seekTo(t);
       },
-      regenerateCurrent: () => {},
       toggleSearch: () => {}
     });
   });

@@ -18,3 +18,6 @@ def test_config_endpoint(tmp_path, monkeypatch):
     assert "large-v3" in body["available_models"]
     assert body["max_video_minutes"] == 90
     assert body["has_openai_fallback"] is False
+    assert "job_ttl_hours" in body
+    assert isinstance(body["job_ttl_hours"], int)
+    assert body["job_ttl_hours"] > 0

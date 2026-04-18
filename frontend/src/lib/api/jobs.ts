@@ -6,6 +6,14 @@ import type {
   SegmentDto
 } from './types';
 
+export type ServerConfig = ConfigDto;
+
+export async function fetchConfig(): Promise<ServerConfig> {
+  const res = await fetch('/api/config');
+  if (!res.ok) throw new Error(`config fetch failed: ${res.status}`);
+  return (await res.json()) as ServerConfig;
+}
+
 export const api = {
   config: () => http.get<ConfigDto>('/api/config'),
 
@@ -43,9 +51,6 @@ export const api = {
     idx: number,
     patch: { text?: string; start?: number; end?: number }
   ) => http.patch<{ ok: boolean }>(`/api/jobs/${id}/segments/${idx}`, patch),
-
-  regenerateSegment: (id: string, idx: number) =>
-    http.post<{ ok: boolean }>(`/api/jobs/${id}/segments/${idx}/regenerate`),
 
   searchReplace: (
     id: string,
