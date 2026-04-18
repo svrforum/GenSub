@@ -125,3 +125,38 @@ def delete_job(engine: Engine, settings: Settings, job_id: str) -> bool:
     if job_dir.exists():
         shutil.rmtree(job_dir, ignore_errors=True)
     return True
+
+
+def toggle_pin(engine: Engine, job_id: str) -> bool | None:
+    """pinned 값을 토글. 새 pinned 상태 반환. job이 없으면 None."""
+    with Session(engine) as s:
+        job = s.get(Job, job_id)
+        if job is None:
+            return None
+        job.pinned = not job.pinned
+        job.updated_at = datetime.now(UTC)
+        s.add(job)
+        s.commit()
+        return job.pinned
+
+
+def request_burn(engine: Engine, job_id: str) -> None:
+    """ready 또는 done 상태의 job을 burning으로 전이.
+
+    Raises:
+        LookupError: job이 존재하지 않음.
+        ValueError: job이 ready/done 상태가 아님.
+    """
+    with Session(engine) as s:
+        job = s.get(Job, job_id)
+        if job is None:
+            raise LookupError(job_id)
+        if job.status not in (JobStatus.ready, JobStatus.done):
+            raise ValueError(f"cannot burn from status {job.status.value}")
+        job.status = JobStatus.burning
+        job.progress = 0.0
+        job.stage_message = "자막을 영상에 입히고 있어요"
+        job.error_message = None
+        job.updated_at = datetime.now(UTC)
+        s.add(job)
+        s.commit()

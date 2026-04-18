@@ -1,11 +1,7 @@
-from datetime import UTC, datetime
-
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel
-from sqlmodel import Session
 
 from app.api.schemas import JobCreateRequest
-from app.models.job import Job, JobStatus
 from app.services import jobs as jobs_service
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
@@ -100,15 +96,10 @@ def delete_job_handler(job_id: str, request: Request) -> dict:
 
 @router.post("/{job_id}/pin")
 def pin_job(job_id: str, request: Request) -> dict:
-    engine = request.app.state.engine
-    with Session(engine) as s:
-        job = s.get(Job, job_id)
-        if job is None:
-            raise HTTPException(status_code=404, detail="job not found")
-        job.pinned = not job.pinned
-        s.add(job)
-        s.commit()
-        return {"ok": True, "pinned": job.pinned}
+    new_pinned = jobs_service.toggle_pin(request.app.state.engine, job_id)
+    if new_pinned is None:
+        raise HTTPException(status_code=404, detail="job not found")
+    return {"ok": True, "pinned": new_pinned}
 
 
 class BurnRequest(BaseModel):
@@ -119,20 +110,12 @@ class BurnRequest(BaseModel):
 
 @router.post("/{job_id}/burn")
 def trigger_burn(job_id: str, body: BurnRequest, request: Request) -> dict:
-    engine = request.app.state.engine
-    with Session(engine) as s:
-        job = s.get(Job, job_id)
-        if job is None:
-            raise HTTPException(status_code=404, detail="job not found")
-        if job.status not in (JobStatus.ready, JobStatus.done):
-            raise HTTPException(
-                status_code=409,
-                detail=f"cannot burn from status {job.status.value}",
-            )
-        job.status = JobStatus.burning
-        job.progress = 0.0
-        job.stage_message = "자막을 영상에 입히고 있어요"
-        job.updated_at = datetime.now(UTC)
-        s.add(job)
-        s.commit()
+    # body(font/size/outline)는 현재 worker에서 무시되는 미사용 파라미터.
+    # 계약 유지를 위해 시그니처만 남김.
+    try:
+        jobs_service.request_burn(request.app.state.engine, job_id)
+    except LookupError as err:
+        raise HTTPException(status_code=404, detail="job not found") from err
+    except ValueError as err:
+        raise HTTPException(status_code=409, detail=str(err)) from err
     return {"ok": True}
