@@ -128,7 +128,14 @@ def test_worker_tick_picks_burn_job_before_pending(tmp_path, monkeypatch):
     )
 
     with patch("app.services.pipeline.burn_video") as mock_burn:
-        def _fake(video, ass, output, total_duration_sec, progress_callback=None):
+        def _fake(
+            video,
+            ass,
+            output,
+            total_duration_sec,
+            progress_callback=None,
+            cancel_check=None,
+        ):
             output.write_bytes(b"burned")
             return output
 

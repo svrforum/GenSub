@@ -131,7 +131,12 @@ def process_burn_job(
 ) -> None:
     media_dir = settings.media_dir / job_id
 
+    def _cancel() -> None:
+        _check_cancel(engine, job_id)
+
     try:
+        _cancel()  # 시작 전 체크
+
         with Session(engine) as s:
             job = s.get(Job, job_id)
             if job is None:
@@ -162,7 +167,15 @@ def process_burn_job(
             output=output,
             total_duration_sec=duration,
             progress_callback=burn_progress,
+            cancel_check=_cancel,
         )
+        _cancel()  # 완료 직전 최종 체크
         job_state.mark_done(engine, job_id)
+    except JobCancelledError:
+        # 부분 생성된 burned.mp4 정리
+        partial = media_dir / "burned.mp4"
+        if partial.exists():
+            partial.unlink(missing_ok=True)
+        job_state.mark_failed(engine, job_id, "사용자가 작업을 취소했어요")
     except Exception as exc:
         job_state.mark_failed(engine, job_id, str(exc))
