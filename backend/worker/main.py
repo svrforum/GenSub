@@ -8,6 +8,7 @@ from app.core.db import create_db_engine, init_db
 from app.core.settings import Settings, get_settings
 from app.models.job import Job, JobStatus
 from app.services import job_state
+from app.services.backup import backup_database
 from app.services.cleanup import sweep_zombie_jobs
 from app.services.pipeline import process_burn_job, process_job
 
@@ -56,6 +57,8 @@ def run() -> None:
     settings = get_settings()
     engine = create_db_engine(settings.database_url)
     init_db(engine)
+
+    backup_database(settings)
 
     swept = sweep_zombie_jobs(engine)
     if swept:
