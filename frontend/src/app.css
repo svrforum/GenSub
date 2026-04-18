@@ -1,0 +1,44 @@
+@import '@fontsource/pretendard';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Pretendard', -apple-system, 'SF Pro Display', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: contain;
+  }
+
+  body {
+    @apply bg-bg-light text-text-primary-light;
+    font-feature-settings: 'ss01', 'ss02';
+  }
+
+  html.dark body {
+    @apply bg-bg-dark text-text-primary-dark;
+  }
+
+  * {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-surface-light rounded-card shadow-card;
+  }
+  html.dark .card {
+    @apply bg-surface-dark border border-divider-dark shadow-none;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center bg-brand text-white
+           rounded-button h-14 px-6 font-semibold text-body
+           transition active:scale-[0.97];
+  }
+  .btn-primary:hover {
+    @apply bg-brand-pressed;
+  }
+}

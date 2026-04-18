@@ -1,0 +1,127 @@
+import shutil
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from uuid import uuid4
+
+from sqlalchemy.engine import Engine
+from sqlmodel import Session
+
+from app.core.settings import Settings
+from app.models.job import Job, JobStatus, SourceKind
+
+
+def create_job_from_url(
+    engine: Engine,
+    settings: Settings,
+    url: str,
+    model: str,
+    language: str | None,
+    initial_prompt: str | None,
+) -> Job:
+    now = datetime.now(UTC)
+    job = Job(
+        id=uuid4().hex,
+        source_url=url,
+        source_kind=SourceKind.url.value,
+        model_name=model,
+        language=language,
+        initial_prompt=initial_prompt,
+        status=JobStatus.pending,
+        progress=0.0,
+        stage_message="준비하고 있어요",
+        created_at=now,
+        updated_at=now,
+        expires_at=now + timedelta(hours=settings.job_ttl_hours),
+    )
+    with Session(engine) as s:
+        s.add(job)
+        s.commit()
+        s.refresh(job)
+    return job
+
+
+def create_job_from_upload(
+    engine: Engine,
+    settings: Settings,
+    filename: str,
+    model: str,
+    language: str | None,
+    initial_prompt: str | None,
+) -> tuple[Job, Path]:
+    now = datetime.now(UTC)
+    job_id = uuid4().hex
+    suffix = Path(filename).suffix or ".mp4"
+    job_dir = settings.media_dir / job_id
+    job_dir.mkdir(parents=True, exist_ok=True)
+    dest = job_dir / f"source{suffix}"
+
+    job = Job(
+        id=job_id,
+        source_url=None,
+        source_kind=SourceKind.upload.value,
+        title=filename,
+        model_name=model,
+        language=language,
+        initial_prompt=initial_prompt,
+        status=JobStatus.pending,
+        progress=0.0,
+        stage_message="준비하고 있어요",
+        created_at=now,
+        updated_at=now,
+        expires_at=now + timedelta(hours=settings.job_ttl_hours),
+    )
+    with Session(engine) as s:
+        s.add(job)
+        s.commit()
+        s.refresh(job)
+    return job, dest
+
+
+def get_job(engine: Engine, job_id: str) -> Job | None:
+    with Session(engine) as s:
+        return s.get(Job, job_id)
+
+
+def job_to_dict(job: Job) -> dict:
+    return {
+        "id": job.id,
+        "source_url": job.source_url,
+        "source_kind": job.source_kind,
+        "title": job.title,
+        "duration_sec": job.duration_sec,
+        "language": job.language,
+        "model_name": job.model_name,
+        "status": job.status.value if hasattr(job.status, "value") else job.status,
+        "progress": job.progress,
+        "stage_message": job.stage_message,
+        "error_message": job.error_message,
+        "created_at": job.created_at.isoformat(),
+        "updated_at": job.updated_at.isoformat(),
+        "expires_at": job.expires_at.isoformat(),
+        "cancel_requested": job.cancel_requested,
+    }
+
+
+def request_cancel(engine: Engine, job_id: str) -> bool:
+    with Session(engine) as s:
+        job = s.get(Job, job_id)
+        if job is None:
+            return False
+        job.cancel_requested = True
+        job.updated_at = datetime.now(UTC)
+        s.add(job)
+        s.commit()
+        return True
+
+
+def delete_job(engine: Engine, settings: Settings, job_id: str) -> bool:
+    with Session(engine) as s:
+        job = s.get(Job, job_id)
+        if job is None:
+            return False
+        s.delete(job)
+        s.commit()
+    job_dir = settings.media_dir / job_id
+    if job_dir.exists():
+        shutil.rmtree(job_dir, ignore_errors=True)
+    return True

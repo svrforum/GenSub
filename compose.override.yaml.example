@@ -1,0 +1,16 @@
+# 개발용. 이 파일을 compose.override.yaml로 복사해서 사용:
+#   cp compose.override.yaml.example compose.override.yaml
+services:
+  api:
+    volumes:
+      - ./backend:/app
+      - ./data:/data
+    command: >
+      uv run --no-sync uvicorn app.main:create_app
+      --factory
+      --host 0.0.0.0 --port 8000
+      --reload
+  worker:
+    volumes:
+      - ./backend:/app
+      - ./data:/data

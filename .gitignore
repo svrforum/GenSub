@@ -1,1 +1,38 @@
+# Worktrees (keep at top)
 .worktrees/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+.svelte-kit/
+build/
+dist/
+# frontend/package-lock.json  # tracked: required for Docker npm ci
+
+# Env
+.env
+.env.local
+
+# Runtime data (bind mount target)
+data/db/*
+data/media/*
+data/models/*
+!data/db/.gitkeep
+!data/media/.gitkeep
+!data/models/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
