@@ -204,29 +204,29 @@
                 {:else}
                   <!-- svelte-ignore a11y-no-static-element-interactions -->
                   <div
-                    class="flex items-center px-3 py-2 cursor-pointer"
+                    class="flex items-center gap-1.5 px-2 py-2 cursor-pointer"
                     on:click={() => openJob(item.jobId)}
                   >
+                    <!-- 북마크 (좌측, 항상 보임) -->
+                    <button
+                      type="button"
+                      class="shrink-0 p-0.5 rounded transition-colors
+                             {item.bookmarked
+                               ? 'text-brand'
+                               : 'text-transparent hover:text-text-secondary-light dark:hover:text-text-secondary-dark'}"
+                      on:click|stopPropagation={() => handleBookmark(item)}
+                      aria-label={item.bookmarked ? '북마크 해제' : '북마크'}
+                    >
+                      <Bookmark size={13} fill={item.bookmarked ? 'currentColor' : 'none'}
+                                strokeWidth={item.bookmarked ? 2 : 1.5} />
+                    </button>
                     <span class="flex-1 truncate text-sm
                                  {activeJobId === item.jobId ? 'font-medium' : ''}
                                  {item.title ? 'text-text-primary-light dark:text-text-primary-dark' : 'text-text-secondary-light dark:text-text-secondary-dark italic'}">
                       {item.title || '제목 없음'}
                     </span>
                   </div>
-                  <!-- 북마크 표시 (항상 보임) -->
-                  {#if item.bookmarked}
-                    <div class="absolute right-1 top-1/2 -translate-y-1/2">
-                      <button
-                        type="button"
-                        class="p-1 text-brand"
-                        on:click|stopPropagation={() => handleBookmark(item)}
-                        aria-label="북마크 해제"
-                      >
-                        <Bookmark size={13} fill="currentColor" />
-                      </button>
-                    </div>
-                  {/if}
-                  <!-- 호버 액션 -->
+                  <!-- 호버 액션 (우측: 수정 + 삭제만) -->
                   {#if hoveredId === item.jobId || activeJobId === item.jobId}
                     <div
                       class="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5
@@ -234,17 +234,6 @@
                              {hoveredId === item.jobId ? 'opacity-100' : 'opacity-0'}
                              transition-opacity duration-100"
                     >
-                      <button
-                        type="button"
-                        class="p-1.5 rounded-md transition-colors
-                               {item.bookmarked
-                                 ? 'text-brand hover:bg-brand/10'
-                                 : 'text-text-secondary-light dark:text-text-secondary-dark hover:bg-black/5 dark:hover:bg-white/10'}"
-                        on:click|stopPropagation={() => handleBookmark(item)}
-                        aria-label={item.bookmarked ? '북마크 해제' : '북마크'}
-                      >
-                        <Bookmark size={14} fill={item.bookmarked ? 'currentColor' : 'none'} />
-                      </button>
                       <button
                         type="button"
                         class="p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/10
