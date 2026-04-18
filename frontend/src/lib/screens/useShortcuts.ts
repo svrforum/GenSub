@@ -3,7 +3,6 @@ export interface ShortcutHandlers {
   prevSegment: () => void;
   nextSegment: () => void;
   seekRelative: (delta: number) => void;
-  regenerateCurrent: () => void;
   toggleSearch: () => void;
 }
 
@@ -45,10 +44,6 @@ export function installShortcuts(handlers: ShortcutHandlers): () => void {
         break;
       case 'l':
         handlers.seekRelative(10);
-        break;
-      case 'r':
-      case 'R':
-        handlers.regenerateCurrent();
         break;
       default:
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {

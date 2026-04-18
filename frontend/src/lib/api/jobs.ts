@@ -44,9 +44,6 @@ export const api = {
     patch: { text?: string; start?: number; end?: number }
   ) => http.patch<{ ok: boolean }>(`/api/jobs/${id}/segments/${idx}`, patch),
 
-  regenerateSegment: (id: string, idx: number) =>
-    http.post<{ ok: boolean }>(`/api/jobs/${id}/segments/${idx}/regenerate`),
-
   searchReplace: (
     id: string,
     find: string,
