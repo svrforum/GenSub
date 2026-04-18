@@ -1,3 +1,7 @@
+volumes:
+  gensub-data:
+    driver: local
+
 services:
   api:
     build: .
@@ -16,7 +20,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-*}
     volumes:
-      - ./data:/data
+      - gensub-data:/data
     command: >
       uv run --no-sync uvicorn app.main:create_app
       --factory
@@ -45,7 +49,7 @@ services:
       COMPUTE_TYPE: ${COMPUTE_TYPE:-int8}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     volumes:
-      - ./data:/data
+      - gensub-data:/data
     command: >
       uv run --no-sync python -m worker.main
     stop_grace_period: 30s

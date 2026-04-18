@@ -25,8 +25,27 @@ async def _cleanup_loop(app: FastAPI) -> None:
             purge_expired_jobs(app.state.engine, app.state.settings)
 
 
+def _backup_db(settings) -> None:
+    """시작 시 DB 백업 (최근 3개 유지)."""
+    import shutil
+    from datetime import datetime
+
+    db_path = Path(settings.database_url.replace("sqlite:///", ""))
+    if not db_path.exists():
+        return
+    backup_dir = db_path.parent / "backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    shutil.copy2(db_path, backup_dir / f"jobs_{stamp}.db")
+    # 오래된 백업 정리 (최근 3개만 유지)
+    backups = sorted(backup_dir.glob("jobs_*.db"), reverse=True)
+    for old in backups[3:]:
+        old.unlink(missing_ok=True)
+
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
+    _backup_db(app.state.settings)
     sweep_zombie_jobs(app.state.engine)
     task = asyncio.create_task(_cleanup_loop(app))
     try:
