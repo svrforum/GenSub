@@ -25,6 +25,7 @@ export interface JobDto {
   updated_at: string;
   expires_at: string;
   cancel_requested: boolean;
+  pinned?: boolean;
 }
 
 export interface SegmentDto {

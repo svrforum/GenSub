@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
 
-  import { api } from '$lib/api/jobs';
+  import { api, ApiError } from '$lib/api/jobs';
   import type { JobDto, SegmentDto } from '$lib/api/types';
   import DownloadBar from '$lib/ui/DownloadBar.svelte';
   import BurnSheet from '$lib/ui/BurnSheet.svelte';
@@ -10,6 +10,7 @@
   import VideoPlayer from '$lib/ui/VideoPlayer.svelte';
   import { installShortcuts } from './useShortcuts';
   import { reset } from '$lib/stores/current';
+  import { removeFromHistory } from '$lib/stores/history';
 
   export let jobId: string;
 
@@ -28,6 +29,12 @@
     try {
       [job, segments] = await Promise.all([api.getJob(jobId), api.segments(jobId)]);
     } catch (e) {
+      // 404: 이미 만료/삭제된 작업 — 히스토리에서 정리하고 idle로 복귀
+      if (e instanceof ApiError && e.status === 404) {
+        removeFromHistory(jobId);
+        reset();
+        return;
+      }
       errorText = e instanceof Error ? e.message : '불러올 수 없어요';
     } finally {
       loading = false;

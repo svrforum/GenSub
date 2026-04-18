@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { Bookmark, PenLine, PanelLeftClose, Trash2 } from 'lucide-svelte';
 
-  import { api, fetchConfig } from '$lib/api/jobs';
+  import { api, ApiError, fetchConfig } from '$lib/api/jobs';
   import { current, reset } from '$lib/stores/current';
   import {
     history,
@@ -23,26 +23,72 @@
   let hoveredId: string | null = null;
 
   $: if (!collapsed && !validated) {
-    validateOnce();
+    syncWithServer();
   }
 
-  async function validateOnce() {
+  /**
+   * 서버와 히스토리 동기화. localStorage만 믿지 않고 서버가 source of truth.
+   * - 서버에 있는 작업 → 히스토리에 추가/갱신 (title 복구, pinned 동기화)
+   * - localStorage 항목 중 서버에 **404로 확인된** 것만 제거 (네트워크 에러는 보존)
+   */
+  async function syncWithServer() {
     if (validated || validating) return;
     validating = true;
     validated = true;
-    const items: HistoryItem[] = [];
-    const unsub = history.subscribe((h) => { items.push(...h); });
+
+    // 서버 작업 목록 fetch. 네트워크 실패 시 로컬만으로 진행.
+    let serverJobs: Array<{ id: string; title: string | null; pinned?: boolean; created_at: string }> = [];
+    let serverReachable = false;
+    try {
+      const res = await api.listRecentJobs(50);
+      serverJobs = res.jobs;
+      serverReachable = true;
+    } catch {
+      // 서버 불통 — 히스토리는 손대지 말고 그대로 유지
+      validating = false;
+      return;
+    }
+
+    // 현재 로컬 히스토리 스냅샷
+    let localItems: HistoryItem[] = [];
+    const unsub = history.subscribe((h) => { localItems = h; });
     unsub();
-    for (const item of items) {
-      try {
-        const job = await api.getJob(item.jobId);
-        if (job.title && job.title !== item.title) {
-          pushHistory({ jobId: item.jobId, title: job.title, createdAt: item.createdAt });
+
+    const localById = new Map(localItems.map((i) => [i.jobId, i]));
+    const serverIds = new Set(serverJobs.map((j) => j.id));
+
+    // 1. 서버에 있는 작업 → 로컬에 추가/갱신
+    for (const job of serverJobs) {
+      const local = localById.get(job.id);
+      // 사용자가 로컬에서 rename한 경우 title 보존, 아니면 서버 title 채택
+      const hasCustomRename = local && local.originalTitle && local.title !== local.originalTitle;
+      const title = hasCustomRename ? (local!.title) : (job.title ?? local?.title ?? null);
+      const originalTitle = job.title ?? local?.originalTitle ?? local?.title ?? null;
+      pushHistory({
+        jobId: job.id,
+        title,
+        originalTitle,
+        bookmarked: job.pinned ?? local?.bookmarked ?? false,
+        createdAt: job.created_at,
+      });
+    }
+
+    // 2. 로컬에만 있고 서버엔 없는 항목 — 서버에 개별 확인 (list limit 초과 가능성 대비)
+    if (serverReachable) {
+      for (const item of localItems) {
+        if (serverIds.has(item.jobId)) continue;
+        try {
+          await api.getJob(item.jobId);
+          // 존재하면 유지 (list limit을 초과한 오래된 항목)
+        } catch (err) {
+          // 404만 제거. 네트워크 에러 등은 보존.
+          if (err instanceof ApiError && err.status === 404) {
+            removeFromHistory(item.jobId);
+          }
         }
-      } catch {
-        removeFromHistory(item.jobId);
       }
     }
+
     validating = false;
   }
 
