@@ -114,7 +114,7 @@ High 신뢰도 이슈 4건, Medium 6건. 전체 구조는 이미 견고 (SQLite 
 # master에서
 git merge --no-ff feature/gensub -m "merge: integrate feature/gensub (111 commits of iterative implementation)"
 git worktree remove .worktrees/gensub-impl
-git branch -d feature/gensub      # 참조 남기려면 유지해도 무방
+# feature/gensub 브랜치는 삭제하지 않고 참조용으로 보존 (롤백 경로)
 git checkout -b refactor/stability
 ```
 
@@ -230,7 +230,7 @@ git checkout -b refactor/stability
 
 - 유지(두 장): `gensub-idle-screen.png`, `gensub-final-ready.png` → `docs/images/`로 이동.
 - 삭제(39장): 나머지 전부. Playwright 세션 아티팩트라 필요 시 재생성 가능.
-- `.gitignore`는 이미 `.playwright-mcp/`를 제외하므로 추가 수정 불필요. 단, 앞으로 스크린샷이 루트에 쌓이지 않도록 `/gensub-*.png` 패턴 추가 검토.
+- `.gitignore`에 `/gensub-*.png` 패턴 추가 — 앞으로 루트에 스크린샷이 실수로 쌓이지 않도록 방지. (이미 `.playwright-mcp/`는 제외됨.)
 
 ---
 
@@ -274,8 +274,9 @@ git checkout -b refactor/stability
 **변경**:
 - `backend/app/services/burn.py`:
   - `burn_video()`에 `cancel_check: Callable[[], None] | None` 인자 추가
-  - ffmpeg 서브프로세스를 `subprocess.Popen`으로 기동 (현재 structure 확인 후 유지/변경)
-  - 진행률 폴링 루프에서 `cancel_check()` 호출. 예외 발생 시 `proc.terminate()` → 5초 후 `proc.kill()` → 에러 래그
+  - **현재 구조 유지**: `subprocess.Popen`으로 기동한 뒤 `for raw in proc.stdout` 라인 루프로 진행률을 읽는 기존 구조를 그대로 사용.
+  - 루프 **매 라인마다** `cancel_check()` 호출. 취소 예외 발생 시 `proc.terminate()` → `proc.wait(timeout=5)` → 타임아웃이면 `proc.kill()` → 원래 예외 재발생.
+  - 부분 생성된 `output` 파일 정리는 호출부(`process_burn_job`)에서 담당.
 - `backend/app/services/pipeline.py`:
   - `process_burn_job`에 `_check_cancel` 포인트 3군데 추가 (시작 전, 루프 안, 파일 정리 전)
   - `JobCancelledError` 잡아서 `mark_failed("사용자가 작업을 취소했어요")` 처리 (기존 `process_job`과 동일 패턴)
@@ -297,11 +298,11 @@ git checkout -b refactor/stability
   - `fetchConfig()` — `GET /api/config` 호출, `job_ttl_hours` 포함 반환
 - `frontend/src/lib/ui/Sidebar.svelte`:
   - `onMount`에서 `fetchConfig()` 호출해 `job_ttl_hours` 값 로드
-  - "보관 기간" 섹션을 **선택형 → 표시형**으로 변경: "현재 서버 설정: 24시간 후 자동 삭제"
-  - 기존 `localStorage` 키 `gensub.settings.ttlDays` 정리(삭제 or deprecated 주석)
+  - "보관 기간" 섹션을 **선택형 → 표시형**으로 변경: "현재 서버 설정: N시간 후 자동 삭제" (N은 서버 값)
+  - 기존 `localStorage` 키 `gensub.settings.ttlDays`는 **읽지 않고 쓰지 않음**. 남은 값은 다음 localStorage cleanup에서 자연 제거되도록 방치(명시적 삭제 코드는 넣지 않아 다른 기기·탭 영향 없음).
   - 즐겨찾기(pin) 기능 안내 문구 유지: "북마크한 작업은 만료되지 않아요"
 - `backend/app/api/config.py`:
-  - 현재 응답 확인. `job_ttl_hours`가 이미 포함돼 있으면 그대로. 없으면 추가.
+  - 변경 없음. 현재 응답에 `job_ttl_hours`가 이미 포함돼 있음 (확인 완료).
 
 **검증**: 프론트 빌드 + 백엔드 config 엔드포인트 응답 스냅샷 검증 테스트.
 
@@ -324,7 +325,20 @@ git checkout -b refactor/stability
 
 ### R7. worker healthcheck 추가 (XS)
 
-**변경**: `compose.yaml`의 worker 서비스에:
+**변경 1 — Dockerfile**: `python:3.11-slim`에는 `pgrep`이 없음(확인 완료). apt 설치 목록에 `procps` 추가:
+
+```dockerfile
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ffmpeg \
+        mkvtoolnix \
+        libsndfile1 \
+        procps \              # 추가
+        ca-certificates \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+**변경 2 — `compose.yaml`** worker 서비스에 healthcheck 추가:
 ```yaml
 healthcheck:
   test: ["CMD", "pgrep", "-f", "worker.main"]
@@ -332,7 +346,6 @@ healthcheck:
   timeout: 5s
   retries: 3
 ```
-의존: worker 이미지에 `procps` 필요 — 이미 Docker slim 이미지에 없으면 Dockerfile에 추가. (검증 후 결정)
 
 ---
 
