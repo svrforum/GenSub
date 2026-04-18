@@ -40,7 +40,8 @@ def burn_video(
     output.parent.mkdir(parents=True, exist_ok=True)
     args = build_burn_args(video, ass, output)
     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    assert proc.stdout is not None
+    if proc.stdout is None:
+        raise RuntimeError("ffmpeg process failed to start (stdout is None)")
     total_us = total_duration_sec * 1_000_000
     for raw in proc.stdout:
         m = _TIME_RE.search(raw)
