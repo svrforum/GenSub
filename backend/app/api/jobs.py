@@ -98,6 +98,19 @@ def delete_job_handler(job_id: str, request: Request) -> dict:
     return {"ok": True}
 
 
+@router.post("/{job_id}/pin")
+def pin_job(job_id: str, request: Request) -> dict:
+    engine = request.app.state.engine
+    with Session(engine) as s:
+        job = s.get(Job, job_id)
+        if job is None:
+            raise HTTPException(status_code=404, detail="job not found")
+        job.pinned = not job.pinned
+        s.add(job)
+        s.commit()
+        return {"ok": True, "pinned": job.pinned}
+
+
 class BurnRequest(BaseModel):
     font: str = "Pretendard"
     size: int = 42

@@ -7,6 +7,7 @@ export interface HistoryItem {
   jobId: string;
   title: string | null;
   originalTitle?: string | null;
+  bookmarked?: boolean;
   createdAt: string;
 }
 
@@ -48,6 +49,16 @@ export function renameHistory(jobId: string, newTitle: string) {
   history.update((items) => {
     const next = items.map((x) =>
       x.jobId === jobId ? { ...x, title: newTitle } : x
+    );
+    save(next);
+    return next;
+  });
+}
+
+export function toggleBookmark(jobId: string) {
+  history.update((items) => {
+    const next = items.map((x) =>
+      x.jobId === jobId ? { ...x, bookmarked: !x.bookmarked } : x
     );
     save(next);
     return next;

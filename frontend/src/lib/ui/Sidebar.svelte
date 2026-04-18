@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { PenLine, Plus, PanelLeftClose, Trash2 } from 'lucide-svelte';
+  import { Bookmark, PenLine, PanelLeftClose, Trash2 } from 'lucide-svelte';
 
   import { api } from '$lib/api/jobs';
   import { current, reset } from '$lib/stores/current';
@@ -9,6 +9,7 @@
     pushHistory,
     removeFromHistory,
     renameHistory,
+    toggleBookmark,
     type HistoryItem
   } from '$lib/stores/history';
 
@@ -77,6 +78,16 @@
     removeFromHistory(item.jobId);
     // 현재 보고 있는 작업이면 홈으로
     if ($current.jobId === item.jobId) reset();
+  }
+
+  async function handleBookmark(item: HistoryItem) {
+    toggleBookmark(item.jobId);
+    try {
+      await api.pinJob(item.jobId);
+    } catch {
+      // 서버 실패 시 되돌리기
+      toggleBookmark(item.jobId);
+    }
   }
 
   function handleEditKey(e: KeyboardEvent, item: HistoryItem) {
@@ -202,6 +213,19 @@
                       {item.title || '제목 없음'}
                     </span>
                   </div>
+                  <!-- 북마크 표시 (항상 보임) -->
+                  {#if item.bookmarked}
+                    <div class="absolute right-1 top-1/2 -translate-y-1/2">
+                      <button
+                        type="button"
+                        class="p-1 text-brand"
+                        on:click|stopPropagation={() => handleBookmark(item)}
+                        aria-label="북마크 해제"
+                      >
+                        <Bookmark size={13} fill="currentColor" />
+                      </button>
+                    </div>
+                  {/if}
                   <!-- 호버 액션 -->
                   {#if hoveredId === item.jobId || activeJobId === item.jobId}
                     <div
@@ -210,6 +234,17 @@
                              {hoveredId === item.jobId ? 'opacity-100' : 'opacity-0'}
                              transition-opacity duration-100"
                     >
+                      <button
+                        type="button"
+                        class="p-1.5 rounded-md transition-colors
+                               {item.bookmarked
+                                 ? 'text-brand hover:bg-brand/10'
+                                 : 'text-text-secondary-light dark:text-text-secondary-dark hover:bg-black/5 dark:hover:bg-white/10'}"
+                        on:click|stopPropagation={() => handleBookmark(item)}
+                        aria-label={item.bookmarked ? '북마크 해제' : '북마크'}
+                      >
+                        <Bookmark size={14} fill={item.bookmarked ? 'currentColor' : 'none'} />
+                      </button>
                       <button
                         type="button"
                         class="p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/10

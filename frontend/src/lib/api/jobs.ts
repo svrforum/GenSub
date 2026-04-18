@@ -34,6 +34,8 @@ export const api = {
 
   deleteJob: (id: string) => http.del<{ ok: boolean }>(`/api/jobs/${id}`),
 
+  pinJob: (id: string) => http.post<{ ok: boolean; pinned: boolean }>(`/api/jobs/${id}/pin`),
+
   segments: (id: string) => http.get<SegmentDto[]>(`/api/jobs/${id}/segments`),
 
   patchSegment: (

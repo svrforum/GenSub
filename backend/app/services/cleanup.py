@@ -31,7 +31,9 @@ def purge_expired_jobs(engine: Engine, settings: Settings) -> int:
     now = datetime.now(UTC)
     count = 0
     with Session(engine) as s:
-        rows = s.exec(select(Job).where(Job.expires_at < now)).all()
+        rows = s.exec(
+            select(Job).where(Job.expires_at < now, Job.pinned == False)  # noqa: E712
+        ).all()
         for job in rows:
             job_dir = settings.media_dir / job.id
             if job_dir.exists():

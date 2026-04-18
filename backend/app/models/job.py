@@ -42,3 +42,4 @@ class Job(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=_utcnow)
     expires_at: datetime
     cancel_requested: bool = False
+    pinned: bool = False
