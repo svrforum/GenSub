@@ -36,3 +36,9 @@ Thumbs.db
 # IDE
 .idea/
 .vscode/
+
+# 루트에 playwright 스크린샷이 실수로 쌓이는 것 방지
+/gensub-*.png
+
+# Playwright MCP 세션 디렉토리
+.playwright-mcp/
