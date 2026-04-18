@@ -68,6 +68,13 @@ async def upload_job(
     return {"job_id": job.id, "status": job.status.value}
 
 
+@router.get("")
+def list_jobs(request: Request, limit: int = 20) -> dict:
+    """만료되지 않은 최근 작업 리스트. 사이드바 복구용."""
+    jobs = jobs_service.list_recent_jobs(request.app.state.engine, limit=limit)
+    return {"jobs": [jobs_service.job_to_dict(j) for j in jobs]}
+
+
 @router.get("/{job_id}")
 def get_job(job_id: str, request: Request) -> dict:
     job = jobs_service.get_job(request.app.state.engine, job_id)

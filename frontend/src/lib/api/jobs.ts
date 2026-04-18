@@ -1,4 +1,6 @@
-import { http } from './client';
+import { ApiError, http } from './client';
+
+export { ApiError };
 import type {
   ConfigDto,
   JobCreateRequest,
@@ -37,6 +39,9 @@ export const api = {
   },
 
   getJob: (id: string) => http.get<JobDto>(`/api/jobs/${id}`),
+
+  listRecentJobs: (limit = 20) =>
+    http.get<{ jobs: JobDto[] }>(`/api/jobs?limit=${limit}`),
 
   cancelJob: (id: string) => http.post<{ ok: boolean }>(`/api/jobs/${id}/cancel`),
 

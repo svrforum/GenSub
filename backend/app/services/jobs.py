@@ -99,7 +99,24 @@ def job_to_dict(job: Job) -> dict:
         "updated_at": job.updated_at.isoformat(),
         "expires_at": job.expires_at.isoformat(),
         "cancel_requested": job.cancel_requested,
+        "pinned": job.pinned,
     }
+
+
+def list_recent_jobs(engine: Engine, limit: int = 20) -> list[Job]:
+    """만료되지 않은 최근 작업 리스트. pinned 우선, 그다음 updated_at 내림차순."""
+    from sqlmodel import select
+
+    now = datetime.now(UTC)
+    with Session(engine) as session:
+        stmt = (
+            select(Job)
+            .where(Job.expires_at > now)
+            .order_by(Job.pinned.desc(), Job.updated_at.desc())  # type: ignore[attr-defined]
+            .limit(limit)
+        )
+        result = session.exec(stmt)
+        return list(result.all())
 
 
 def request_cancel(engine: Engine, job_id: str) -> bool:
