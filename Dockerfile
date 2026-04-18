@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ffmpeg \
         mkvtoolnix \
         libsndfile1 \
+        procps \
         ca-certificates \
         curl \
     && rm -rf /var/lib/apt/lists/*
