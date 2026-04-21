@@ -128,3 +128,57 @@ def delete_memos_for_job(engine: Engine, job_id: str) -> int:
             session.delete(m)
         session.commit()
         return len(memos)
+
+
+@dataclass
+class MemoView:
+    """전역 리스트 응답의 한 항목."""
+    id: int
+    job_id: str
+    segment_idx: int
+    memo_text: str
+    segment_text: str
+    start: float
+    end: float
+    job_title: str | None
+    job_alive: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+def list_all_memos_with_liveness(engine: Engine, limit: int = 100) -> list[MemoView]:
+    """전역 메모 리스트. Job/Segment LEFT JOIN 으로 N+1 방지.
+
+    Job/Segment가 살아있으면 현재값, 없으면 스냅샷으로 채운다.
+    """
+    with Session(engine) as session:
+        stmt = (
+            select(Memo, Job, Segment)
+            .join(Job, Job.id == Memo.job_id, isouter=True)
+            .join(
+                Segment,
+                (Segment.job_id == Memo.job_id) & (Segment.idx == Memo.segment_idx),
+                isouter=True,
+            )
+            .order_by(Memo.created_at.desc())  # type: ignore[attr-defined]
+            .limit(limit)
+        )
+        result = session.exec(stmt)
+        rows = list(result.all())
+
+    items: list[MemoView] = []
+    for memo, job, segment in rows:
+        items.append(MemoView(
+            id=memo.id,
+            job_id=memo.job_id,
+            segment_idx=memo.segment_idx,
+            memo_text=memo.memo_text,
+            segment_text=(segment.text if segment else memo.segment_text_snapshot),
+            start=memo.segment_start,
+            end=memo.segment_end,
+            job_title=(job.title if job else memo.job_title_snapshot),
+            job_alive=(job is not None),
+            created_at=memo.created_at,
+            updated_at=memo.updated_at,
+        ))
+    return items
