@@ -65,3 +65,16 @@ def test_list_recent_respects_limit(engine):
 
 def test_list_recent_empty_when_no_jobs(engine):
     assert list_recent_jobs(engine) == []
+
+
+def test_list_recent_includes_pinned_job_even_if_expired(engine):
+    """북마크의 본래 목적: 만료 TTL에 무관하게 보존 + 노출."""
+    _insert(engine, "expired_pinned", JobStatus.ready, pinned=True, expires_in_h=-48)
+    _insert(engine, "expired_unpinned", JobStatus.ready, pinned=False, expires_in_h=-48)
+    _insert(engine, "fresh_unpinned", JobStatus.ready, pinned=False, expires_in_h=24)
+
+    jobs = list_recent_jobs(engine)
+    ids = {j.id for j in jobs}
+    assert "expired_pinned" in ids
+    assert "fresh_unpinned" in ids
+    assert "expired_unpinned" not in ids
