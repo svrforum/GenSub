@@ -5,6 +5,7 @@
   export let vttSrc: string;
   export let currentTime = 0;
   export let onError: (() => void) | undefined = undefined;
+  export let onLoadedMetadata: (() => void) | null = null;
 
   let videoEl: HTMLVideoElement;
 
@@ -62,6 +63,7 @@
   <video
     bind:this={videoEl}
     on:timeupdate={onTimeUpdate}
+    on:loadedmetadata={() => onLoadedMetadata?.()}
     class="w-full h-full bg-black"
     controls
     preload="metadata"
