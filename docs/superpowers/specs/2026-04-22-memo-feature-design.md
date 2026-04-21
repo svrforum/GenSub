@@ -45,7 +45,9 @@
 ```python
 # backend/app/models/memo.py
 from datetime import UTC, datetime
-from sqlmodel import Field, SQLModel, UniqueConstraint
+
+from sqlalchemy import UniqueConstraint
+from sqlmodel import Field, SQLModel
 
 
 def _utcnow() -> datetime:
@@ -70,6 +72,8 @@ class Memo(SQLModel, table=True):
     created_at: datetime = Field(default_factory=_utcnow)
     updated_at: datetime = Field(default_factory=_utcnow)
 ```
+
+**주의**: SQLite는 SQL-level VARCHAR 길이를 강제하지 않는다. `max_length=500` 은 Pydantic 레벨 검증이므로, API 입력(`memo_text` body) 에 Pydantic 스키마로 같은 제약을 걸어 이중 방어한다.
 
 **제약**:
 - `UNIQUE(job_id, segment_idx)`: 같은 세그먼트에 두 번 저장 불가. 두 번째 호출은 toggle-off(삭제)로 처리.
@@ -102,18 +106,21 @@ class Memo(SQLModel, table=True):
 | `PATCH` | `/api/memos/{memo_id}` | `memo_text` 수정 |
 | `DELETE` | `/api/memos/{memo_id}` | 개별 메모 삭제 |
 
-### 4.2 POST 생성 동작
+### 4.2 POST 생성 동작 (toggle-save)
 
 ```
 POST /api/jobs/{job_id}/segments/{idx}/memo
-Body: {"memo_text": "..."} | {} (생략 가능)
+Body: (없음)
 ```
+
+순수한 저장 토글. 메모 텍스트는 이 엔드포인트에서 설정하지 않고, 저장 후 `PATCH /api/memos/{id}` 로 별도 수정 (Q3-A 패턴).
 
 동작:
 1. `job_id` / `segment_idx` 유효성 확인. 해당 Segment 없으면 `404`.
 2. 이미 메모가 있는가?
-   - **있음**: 삭제(toggle-off). 응답 `{"ok": true, "action": "deleted"}`.
-   - **없음**: 생성. Segment의 `text`·`start`·`end`·Job `title` 을 스냅샷으로 기록. 응답 `{"ok": true, "action": "created", "memo": {...}}`.
+   - **없음**: 생성. Segment의 `text`·`start`·`end`·Job `title` 을 스냅샷으로 기록. `memo_text=""`. 응답 `201 {"ok": true, "action": "created", "memo": {...}}`.
+   - **있음 + `memo_text`가 빈 문자열**: 삭제(toggle-off). 응답 `200 {"ok": true, "action": "deleted"}`.
+   - **있음 + `memo_text`에 내용 있음**: `409 Conflict {"detail": "memo_has_text", "memo_id": <id>}`. 프론트가 확인 다이얼로그 후 `DELETE /api/memos/{id}` 로 명시적 삭제. **실수로 메모 내용을 잃는 것 방지**.
 3. 생성 시 Job `pinned=true` 자동 세팅 (기존 `services.jobs.pin_job` 재사용; 이미 pinned면 no-op).
 
 ### 4.3 GET 전역 리스트 응답 포맷
@@ -267,24 +274,23 @@ export interface CurrentState {
 }
 ```
 
-`ReadyScreen.svelte` 에서 소비:
-```ts
-onMount(() => {
-  // 영상 load 후에 seek
-  if ($current.initialTime !== undefined) {
-    seekWhenReady($current.initialTime);
-  }
-});
-```
+`ReadyScreen.svelte` 에서 소비 — 처음 마운트와 이후 `initialTime` 변경을 **하나의 reactive 블록**으로 통일:
 
-`seekWhenReady(t)` 가 `playerRef.seekTo(t)` 를 호출하되 `VideoPlayer.svelte` 가 `onLoadedMetadata` 콜백을 노출하도록 확장 (현재 없으면 추가). 1회성: 같은 Job 내 재방문 시 중복 seek 안 함.
-
-**Edge case**: 사용자가 이미 해당 영상을 보고 있는 중 다른 메모 클릭 → `jobId` 동일, `initialTime` 만 바뀜. 이 경우 ReadyScreen 를 rerender하지 않고 `playerRef.seekTo(initialTime)` 만 호출하도록 reactive 처리:
 ```ts
-$: if ($current.initialTime !== undefined && playerRef && currentJobId === $current.jobId) {
+let lastSeekTarget: number | null = null;
+
+$: if ($current.initialTime !== undefined
+        && $current.initialTime !== lastSeekTarget
+        && playerRef
+        && videoReady) {
   playerRef.seekTo($current.initialTime);
+  lastSeekTarget = $current.initialTime;
 }
 ```
+
+- `VideoPlayer.svelte` 는 `onLoadedMetadata` 를 외부로 노출 (없으면 추가). 비디오 메타데이터 로드 완료 후에 `videoReady = true` 를 세팅해야 seek가 실제로 먹힘.
+- `lastSeekTarget` 가드로 reactive가 같은 값에 여러 번 재실행되는 걸 방지.
+- 이 하나의 블록이 **초기 마운트 + 같은 Job 내 재방문(jobId 동일·initialTime만 변경)** 양쪽을 모두 처리.
 
 ### 5.5 새 스토어 `memos`
 
@@ -374,7 +380,7 @@ frontend/src/lib/
 
 | 리스크 | 완화 |
 |---|---|
-| 메모 있는 영상 자동 pin이 사용자가 모르게 디스크 점유 | 삭제 확인 다이얼로그에 pin 근거 언급 검토 ("이 영상은 메모 때문에 자동 북마크됐어요") — 구현 시 판단 |
+| 메모 있는 영상 자동 pin이 사용자가 모르게 디스크 점유 | Job 삭제 확인 다이얼로그 문구에 메모 개수 명시 ("이 영상의 메모 N개도 함께 삭제됩니다"). 추후 pin 상태 UI에 "자동 북마크됨 — 메모 N개" 라벨 추가는 후속 과제 |
 | `segment_text_snapshot`과 실제 segment.text 이탈 (사용자가 segment 편집 시) | `/api/memos` 응답에서 현재 segment.text 우선 사용. 스냅샷은 fallback 전용 |
 | 500자 초과 입력 — 프론트/서버 동시 검증 실패 | 서버 Pydantic + DB max_length 양쪽 둔다 |
 | `job_alive` 체크가 N+1 쿼리 될 위험 | 단일 `EXISTS` 서브쿼리 또는 JOIN으로 한 번에 |
@@ -391,7 +397,7 @@ frontend/src/lib/
 - [ ] 사이드바 메모 탭이 전역 리스트 정확히 표시, 카운트 배지 동기화.
 - [ ] "보러가기"가 해당 영상으로 이동 + 시작 시점 seek 정확.
 - [ ] 메모 있는 영상 자동 pin + Job 삭제 시 경고.
-- [ ] 기존 91 테스트 + list_recent 4개 그대로 통과. 신규 backend 테스트 전부 pass.
+- [ ] 기존 95 테스트 (91 + list_recent 4) 전부 통과. 신규 memo 테스트 전부 pass.
 - [ ] docker 재빌드 + 기동 후 기존 job `059ddd86…` 접근 OK (사용자 데이터 무영향).
 - [ ] 프론트 빌드 0 errors.
 
