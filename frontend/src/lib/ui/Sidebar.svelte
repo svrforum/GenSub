@@ -138,7 +138,22 @@
 
   async function confirmDelete(item: HistoryItem) {
     const name = item.title || '이 작업';
-    if (!confirm(`"${name}"을(를) 삭제할까요?\n영상과 자막 파일도 함께 삭제돼요.`)) return;
+    let memoCount = 0;
+    try {
+      const res = await memoApi.listForJob(item.jobId);
+      memoCount = res.items.length;
+    } catch {
+      // 무시, 0으로 진행
+    }
+
+    const memoLine = memoCount > 0
+      ? `\n이 영상에 저장한 메모 ${memoCount}개도 함께 삭제됩니다.`
+      : '';
+
+    if (!confirm(`"${name}"을(를) 삭제할까요?\n영상과 자막 파일도 함께 삭제돼요.${memoLine}`)) {
+      return;
+    }
+
     try {
       await api.deleteJob(item.jobId);
     } catch {
@@ -147,6 +162,9 @@
     removeFromHistory(item.jobId);
     // 현재 보고 있는 작업이면 홈으로
     if ($current.jobId === item.jobId) reset();
+    if (memoCount > 0) {
+      refreshMemos();  // 전역 메모 리스트에서 제거됨 반영
+    }
   }
 
   async function handleBookmark(item: HistoryItem) {
