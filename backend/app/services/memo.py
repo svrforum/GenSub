@@ -73,3 +73,58 @@ def toggle_save_memo(engine: Engine, job_id: str, segment_idx: int) -> ToggleRes
         session.commit()
         session.refresh(memo)
         return ToggleResult(action="created", memo=memo)
+
+
+def get_memo_by_segment(engine: Engine, job_id: str, segment_idx: int) -> Memo | None:
+    with Session(engine) as session:
+        stmt = select(Memo).where(
+            Memo.job_id == job_id, Memo.segment_idx == segment_idx
+        )
+        result = session.exec(stmt)
+        return result.first()
+
+
+def list_memos_for_job(engine: Engine, job_id: str) -> list[Memo]:
+    with Session(engine) as session:
+        stmt = (
+            select(Memo)
+            .where(Memo.job_id == job_id)
+            .order_by(Memo.segment_idx)
+        )
+        result = session.exec(stmt)
+        return list(result.all())
+
+
+def update_memo_text(engine: Engine, memo_id: int, memo_text: str) -> Memo | None:
+    with Session(engine) as session:
+        memo = session.get(Memo, memo_id)
+        if memo is None:
+            return None
+        memo.memo_text = memo_text
+        memo.updated_at = datetime.now(UTC)
+        session.add(memo)
+        session.commit()
+        session.refresh(memo)
+        return memo
+
+
+def delete_memo(engine: Engine, memo_id: int) -> bool:
+    with Session(engine) as session:
+        memo = session.get(Memo, memo_id)
+        if memo is None:
+            return False
+        session.delete(memo)
+        session.commit()
+        return True
+
+
+def delete_memos_for_job(engine: Engine, job_id: str) -> int:
+    """Job 삭제와 함께 호출. 제거된 메모 개수 반환."""
+    with Session(engine) as session:
+        stmt = select(Memo).where(Memo.job_id == job_id)
+        result = session.exec(stmt)
+        memos = list(result.all())
+        for m in memos:
+            session.delete(m)
+        session.commit()
+        return len(memos)
