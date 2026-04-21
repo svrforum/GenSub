@@ -12,6 +12,7 @@ from app.api.events import router as events_router
 from app.api.health import router as health_router
 from app.api.jobs import router as jobs_router
 from app.api.media import router as media_router
+from app.api.memo import router as memo_router
 from app.api.segments import router as segments_router
 from app.core.db import create_db_engine, init_db
 from app.core.settings import get_settings
@@ -61,6 +62,7 @@ def create_app() -> FastAPI:
     app.include_router(events_router)
     app.include_router(media_router)
     app.include_router(segments_router)
+    app.include_router(memo_router)
 
     static_path = settings.static_dir or (Path(__file__).parent / "static")
     if static_path.exists() and (static_path / "index.html").exists():
