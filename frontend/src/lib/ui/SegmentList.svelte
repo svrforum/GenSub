@@ -4,6 +4,7 @@
   import { api } from '$lib/api/jobs';
   import type { SegmentDto } from '$lib/api/types';
   import EditableSegment from './EditableSegment.svelte';
+  import SegmentMemo from './SegmentMemo.svelte';
 
   export let jobId: string;
   export let segments: SegmentDto[] = [];
@@ -173,6 +174,9 @@
               <path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6" />
             </svg>
           </a>
+        </div>
+        <div class="mt-1.5">
+          <SegmentMemo {jobId} segmentIdx={seg.idx} />
         </div>
       {/if}
       {#if activeIdx === i && !hasSelection}

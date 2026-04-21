@@ -11,6 +11,7 @@
   import { installShortcuts } from './useShortcuts';
   import { reset } from '$lib/stores/current';
   import { removeFromHistory } from '$lib/stores/history';
+  import { loadJobMemos, clearJobMemos } from '$lib/stores/jobMemos';
 
   export let jobId: string;
 
@@ -28,6 +29,7 @@
   onMount(async () => {
     try {
       [job, segments] = await Promise.all([api.getJob(jobId), api.segments(jobId)]);
+      loadJobMemos(jobId);
     } catch (e) {
       // 404: 이미 만료/삭제된 작업 — 히스토리에서 정리하고 idle로 복귀
       if (e instanceof ApiError && e.status === 404) {
@@ -62,6 +64,7 @@
 
   onDestroy(() => {
     unshort?.();
+    clearJobMemos();
   });
 
   function handleBurnClick() {
