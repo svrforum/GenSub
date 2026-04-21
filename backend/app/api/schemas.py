@@ -35,3 +35,7 @@ class SearchReplaceRequest(BaseModel):
 
 class SearchReplaceResponse(BaseModel):
     changed_count: int
+
+
+class MemoPatchRequest(BaseModel):
+    memo_text: str = Field(min_length=0, max_length=500)
