@@ -9,7 +9,7 @@
   import SegmentList from '$lib/ui/SegmentList.svelte';
   import VideoPlayer from '$lib/ui/VideoPlayer.svelte';
   import { installShortcuts } from './useShortcuts';
-  import { reset } from '$lib/stores/current';
+  import { current, reset } from '$lib/stores/current';
   import { removeFromHistory } from '$lib/stores/history';
   import { loadJobMemos, clearJobMemos } from '$lib/stores/jobMemos';
 
@@ -25,6 +25,18 @@
   let showClipSheet = false;
   let unshort: (() => void) | null = null;
   let videoError = false;
+  let videoReady = false;
+  let lastSeekTarget: number | null = null;
+
+  $: if (
+    $current.initialTime !== undefined
+    && $current.initialTime !== lastSeekTarget
+    && playerRef
+    && videoReady
+  ) {
+    playerRef.seekTo($current.initialTime);
+    lastSeekTarget = $current.initialTime;
+  }
 
   onMount(async () => {
     try {
@@ -103,6 +115,7 @@
               src={api.videoUrl(jobId)}
               vttSrc={api.vttUrl(jobId)}
               onError={() => (videoError = true)}
+              onLoadedMetadata={() => (videoReady = true)}
             />
           </div>
         {/if}
