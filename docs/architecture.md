@@ -196,7 +196,13 @@ pending ────────► downloading ────► transcribing ─
 | 작업 취소 | 각 화면 | `POST /api/jobs/<id>/cancel` | `services/jobs.cancel_job` |
 | 작업 삭제 | `Sidebar.svelte` | `DELETE /api/jobs/<id>` | `services/jobs.delete_job` |
 | 북마크(pin) | `Sidebar.svelte` | `POST /api/jobs/<id>/pin` | `services/jobs.pin_job` |
-| 최근 작업 목록 | `Sidebar.svelte` | (localStorage + `GET /api/jobs/<id>`) | `stores/history.ts` |
+| 최근 작업 목록 | `Sidebar.svelte` 영상 탭 | (localStorage + `GET /api/jobs`) | `stores/history.ts`, `services/jobs.list_recent_jobs` |
+| 세그먼트 메모 저장/해제 | `SegmentMemo.svelte` | `POST /api/jobs/<id>/segments/<idx>/memo` | `services/memo.toggle_save_memo` |
+| 메모 텍스트 수정 | `SegmentMemo.svelte` (인라인 textarea) | `PATCH /api/memos/<id>` | `services/memo.update_memo_text` |
+| 전역 메모 리스트 | `Sidebar.svelte` 메모 탭 + `MemoCard.svelte` | `GET /api/memos` | `services/memo.list_all_memos_with_liveness` |
+| Job별 메모 조회 | `jobMemos` store (SegmentList 표시용) | `GET /api/jobs/<id>/memos` | `services/memo.list_memos_for_job` |
+| 메모 삭제 | `MemoCard.svelte` 삭제 버튼 | `DELETE /api/memos/<id>` | `services/memo.delete_memo` |
+| 보러가기 (메모→영상) | `openMemo` + `ReadyScreen` reactive seek | - | `stores/current.ts` (initialTime) |
 | 다크/라이트 모드 | `+layout.svelte` | - | `theme.ts` + localStorage |
 | 키보드 단축키 | `ReadyScreen.svelte` | - | `useShortcuts.ts` |
 
@@ -212,6 +218,8 @@ pending ────────► downloading ────► transcribing ─
 - `created_at`, `updated_at`, `expires_at`, `cancel_requested`, `pinned`.
 
 **`Segment`** (`models/segment.py`) — 세그먼트. `(job_id, idx)` 고유. `start/end` 초 단위. `avg_logprob`·`no_speech_prob`·`words` (word-level JSON)은 편집 및 저신뢰도 하이라이트용.
+
+**`Memo`** (`models/memo.py`) — 세그먼트 단위 저장 + 선택적 사용자 메모. `UNIQUE(job_id, segment_idx)`. `memo_text` 빈 문자열 허용(메모 없이 북마크 가능). 스냅샷 필드(`segment_text_snapshot`, `segment_start`, `segment_end`, `job_title_snapshot`)로 Job/Segment 만료 시에도 리스트에 텍스트 보존. 생성 시 `services/memo.toggle_save_memo` 가 해당 Job을 자동 pin.
 
 ### 5.2 REST 엔드포인트 요약
 
@@ -234,6 +242,12 @@ pending ────────► downloading ────► transcribing ─
 | GET | `/api/jobs/{id}/segments` | 세그먼트 리스트 |
 | PATCH | `/api/jobs/{id}/segments/{idx}` | 세그먼트 편집 |
 | POST | `/api/jobs/{id}/search_replace` | 전체 찾아바꾸기 |
+| GET | `/api/jobs` | 사이드바용 최근 Job 리스트 (pinned 우선, 만료돼도 pinned 보존) |
+| POST | `/api/jobs/{id}/segments/{idx}/memo` | 메모 toggle-save (201 create / 200 delete / 409 has-text / 404) |
+| GET | `/api/jobs/{id}/memos` | Job별 메모 lite 리스트 (segment UI 상태 표시용) |
+| GET | `/api/memos` | 전역 메모 리스트 (최신순, `job_alive` 포함) |
+| PATCH | `/api/memos/{id}` | 메모 텍스트 수정 (500자 제한) |
+| DELETE | `/api/memos/{id}` | 메모 삭제 |
 | GET | `/api/config` | 프론트 초기값 (모델 목록, ttl, max_video 등) |
 | GET | `/api/health` | 헬스체크 |
 
