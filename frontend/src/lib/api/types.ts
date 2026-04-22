@@ -61,3 +61,38 @@ export interface JobProgressEvent {
   active_count?: number;
   ahead_count?: number;
 }
+
+// 메모 기능 (2026-04-22 spec)
+export interface MemoDto {
+  id: number;
+  job_id: string;
+  segment_idx: number;
+  memo_text: string;
+  segment_text_snapshot: string;
+  segment_start: number;
+  segment_end: number;
+  job_title_snapshot: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MemoListItemDto {
+  id: number;
+  job_id: string;
+  segment_idx: number;
+  memo_text: string;
+  segment_text: string;
+  start: number;
+  end: number;
+  job_title: string | null;
+  job_alive: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface JobMemoLiteDto {
+  id: number;
+  job_id: string;
+  segment_idx: number;
+  memo_text: string;
+}

@@ -10,6 +10,7 @@ export interface CurrentState {
   progress: number;
   stageMessage: string;
   errorMessage: string | null;
+  initialTime?: number; // 메모 "보러가기" 시 seek 대상 (초)
 }
 
 const initial: CurrentState = {
@@ -25,4 +26,20 @@ export const current = writable<CurrentState>(initial);
 
 export function reset() {
   current.set(initial);
+}
+
+/**
+ * 메모 "보러가기" 동작: 해당 Job의 ReadyScreen으로 전환 + 시작 시점 seek.
+ * ReadyScreen.svelte가 `initialTime` 변화를 reactive로 감지하여 VideoPlayer.seekTo 호출.
+ */
+export function openMemo(jobId: string, start: number): void {
+  current.set({
+    screen: 'ready',
+    jobId,
+    job: null,
+    progress: 1,
+    stageMessage: '',
+    errorMessage: null,
+    initialTime: start,
+  });
 }

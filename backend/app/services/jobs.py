@@ -8,6 +8,7 @@ from sqlmodel import Session
 
 from app.core.settings import Settings
 from app.models.job import Job, JobStatus, SourceKind
+from app.services.memo import delete_memos_for_job as _delete_memos_for_job
 
 
 def create_job_from_url(
@@ -104,14 +105,20 @@ def job_to_dict(job: Job) -> dict:
 
 
 def list_recent_jobs(engine: Engine, limit: int = 20) -> list[Job]:
-    """만료되지 않은 최근 작업 리스트. pinned 우선, 그다음 updated_at 내림차순."""
+    """사이드바에 노출할 최근 작업 리스트.
+
+    Pinned job은 만료 여부와 무관하게 항상 포함 (북마크의 본래 목적).
+    일반 job은 expires_at > now 일 때만 포함.
+    정렬: pinned 우선, 그다음 updated_at 내림차순.
+    """
+    from sqlalchemy import or_
     from sqlmodel import select
 
     now = datetime.now(UTC)
     with Session(engine) as session:
         stmt = (
             select(Job)
-            .where(Job.expires_at > now)
+            .where(or_(Job.pinned == True, Job.expires_at > now))  # noqa: E712
             .order_by(Job.pinned.desc(), Job.updated_at.desc())  # type: ignore[attr-defined]
             .limit(limit)
         )
@@ -138,6 +145,10 @@ def delete_job(engine: Engine, settings: Settings, job_id: str) -> bool:
             return False
         s.delete(job)
         s.commit()
+
+    # Memo cascade (Job 삭제 후에 — FK 없으므로 순서는 무관하지만 명확성을 위해 뒤)
+    _delete_memos_for_job(engine, job_id)
+
     job_dir = settings.media_dir / job_id
     if job_dir.exists():
         shutil.rmtree(job_dir, ignore_errors=True)
