@@ -203,6 +203,8 @@ pending ────────► downloading ────► transcribing ─
 | Job별 메모 조회 | `jobMemos` store (SegmentList 표시용) | `GET /api/jobs/<id>/memos` | `services/memo.list_memos_for_job` |
 | 메모 삭제 | `MemoCard.svelte` 삭제 버튼 | `DELETE /api/memos/<id>` | `services/memo.delete_memo` |
 | 보러가기 (메모→영상) | `openMemo` + `ReadyScreen` reactive seek | - | `stores/current.ts` (initialTime) |
+| 전역 검색 (자막+메모+영상) | `SearchBar.svelte` 헤더 + `SearchModal.svelte` ⌘K 모달 | `GET /api/search` | `services/search.search_all` |
+| 영상 내 자막 검색 (⌘F) | `InVideoSearchOverlay.svelte` (ReadyScreen) | - (클라이언트 사이드) | - |
 | 다크/라이트 모드 | `+layout.svelte` | - | `theme.ts` + localStorage |
 | 키보드 단축키 | `ReadyScreen.svelte` | - | `useShortcuts.ts` |
 
@@ -242,6 +244,7 @@ pending ────────► downloading ────► transcribing ─
 | GET | `/api/jobs/{id}/segments` | 세그먼트 리스트 |
 | PATCH | `/api/jobs/{id}/segments/{idx}` | 세그먼트 편집 |
 | POST | `/api/jobs/{id}/search_replace` | 전체 찾아바꾸기 |
+| GET | `/api/search?q=&limit=` | 자막·메모·영상 통합 검색 (LIKE 부분 매치) |
 | GET | `/api/jobs` | 사이드바용 최근 Job 리스트 (pinned 우선, 만료돼도 pinned 보존) |
 | POST | `/api/jobs/{id}/segments/{idx}/memo` | 메모 toggle-save (201 create / 200 delete / 409 has-text / 404) |
 | GET | `/api/jobs/{id}/memos` | Job별 메모 lite 리스트 (segment UI 상태 표시용) |
