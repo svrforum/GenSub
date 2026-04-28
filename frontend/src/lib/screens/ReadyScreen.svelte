@@ -6,6 +6,7 @@
   import DownloadBar from '$lib/ui/DownloadBar.svelte';
   import BurnSheet from '$lib/ui/BurnSheet.svelte';
   import ClipSheet from '$lib/ui/ClipSheet.svelte';
+  import InVideoSearchOverlay from '$lib/ui/InVideoSearchOverlay.svelte';
   import SegmentList from '$lib/ui/SegmentList.svelte';
   import VideoPlayer from '$lib/ui/VideoPlayer.svelte';
   import { installShortcuts } from './useShortcuts';
@@ -27,6 +28,33 @@
   let videoError = false;
   let videoReady = false;
   let lastSeekTarget: number | null = null;
+
+  // 영상 내 ⌘F 검색 상태
+  let inVideoSearchOpen = false;
+  let overlayRef: InVideoSearchOverlay | null = null;
+  let matchedIdxs: Set<number> = new Set();
+  let currentMatchIdx: number | null = null;
+
+  function handleSearchKey(e: KeyboardEvent) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+      e.preventDefault();
+      inVideoSearchOpen = true;
+    }
+  }
+
+  function handleInVideoJump(seg: SegmentDto) {
+    playerRef?.seekTo(seg.start);
+    if (overlayRef) {
+      matchedIdxs = overlayRef.getMatchedIdxSet();
+      currentMatchIdx = overlayRef.getCurrentMatchIdx();
+    }
+  }
+
+  // 오버레이 close 시 매치 강조 해제
+  $: if (!inVideoSearchOpen) {
+    matchedIdxs = new Set();
+    currentMatchIdx = null;
+  }
 
   $: if (
     $current.initialTime !== undefined
@@ -72,6 +100,8 @@
       },
       toggleSearch: () => {}
     });
+    window.addEventListener('keydown', handleSearchKey);
+    return () => window.removeEventListener('keydown', handleSearchKey);
   });
 
   onDestroy(() => {
@@ -91,7 +121,13 @@
     <div class="text-center text-danger">{errorText ?? '데이터 없음'}</div>
   {:else}
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-8">
-      <div class="flex flex-col gap-4">
+      <div class="relative flex flex-col gap-4">
+        <InVideoSearchOverlay
+          bind:this={overlayRef}
+          bind:open={inVideoSearchOpen}
+          {segments}
+          onJump={handleInVideoJump}
+        />
         {#if videoError}
           <div class="card aspect-video flex items-center justify-center">
             <div class="text-center">
@@ -148,6 +184,8 @@
           bind:currentTime
           onJump={(t) => playerRef?.seekTo(t)}
           language={job?.language}
+          {matchedIdxs}
+          {currentMatchIdx}
         />
       </aside>
     </div>
