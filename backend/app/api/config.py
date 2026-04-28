@@ -16,5 +16,4 @@ def config() -> dict:
         "max_video_minutes": s.max_video_minutes,
         "max_upload_mb": s.max_upload_mb,
         "job_ttl_hours": s.job_ttl_hours,
-        "has_openai_fallback": bool(s.openai_api_key),
     }

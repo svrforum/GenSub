@@ -19,7 +19,6 @@ class Settings(BaseSettings):
     compute_type: Literal["int8", "int8_float16", "float16", "float32"] = "int8"
     worker_concurrency: int = Field(default=1, ge=1, le=8)
 
-    openai_api_key: str = ""
     cors_allow_origin: str = "*"
 
     max_upload_mb: int = Field(default=2048, ge=1)

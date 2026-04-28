@@ -62,12 +62,10 @@ open http://localhost:8000
 | 변수 | 기본값 | 설명 |
 |---|---|---|
 | `GENSUB_PORT` | `8000` | 호스트 접속 포트 |
-| `JOB_TTL_HOURS` | `24` | (현재 미사용) 자동 삭제 비활성화. 필드는 호환성용으로 보존 |
 | `MAX_VIDEO_MINUTES` | `90` | 허용 최대 영상 길이 |
 | `DEFAULT_MODEL` | `small` | `tiny`/`base`/`small`/`medium`/`large-v3` |
 | `COMPUTE_TYPE` | `int8` | CPU=`int8`, NVIDIA GPU=`float16` |
 | `WORKER_CONCURRENCY` | `1` | 동시 작업 수 (상한 권장 4) |
-| `OPENAI_API_KEY` | `""` | 옵션: OpenAI Whisper API 폴백 |
 
 전체 목록은 `.env.example` 참고.
 

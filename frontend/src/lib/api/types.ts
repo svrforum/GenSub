@@ -44,7 +44,6 @@ export interface ConfigDto {
   max_video_minutes: number;
   max_upload_mb: number;
   job_ttl_hours: number;
-  has_openai_fallback: boolean;
 }
 
 export interface JobCreateRequest {
