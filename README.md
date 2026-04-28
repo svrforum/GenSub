@@ -87,6 +87,13 @@ cd backend
 uv run pytest
 ```
 
+프론트엔드 테스트:
+
+```bash
+cd frontend
+npm test
+```
+
 코드/문서 규약은 [`CONVENTIONS.md`](CONVENTIONS.md) 참고.
 
 ---
