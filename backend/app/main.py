@@ -1,5 +1,4 @@
-import asyncio
-from contextlib import asynccontextmanager, suppress
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -17,27 +16,21 @@ from app.api.segments import router as segments_router
 from app.core.db import create_db_engine, init_db
 from app.core.settings import get_settings
 from app.services.backup import backup_database
-from app.services.cleanup import purge_expired_jobs, sweep_zombie_jobs
-
-
-async def _cleanup_loop(app: FastAPI) -> None:
-    while True:
-        await asyncio.sleep(3600)
-        with suppress(Exception):
-            purge_expired_jobs(app.state.engine, app.state.settings)
+from app.services.cleanup import sweep_zombie_jobs
 
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
+    """기동 시 DB 백업 + 좀비 작업(중간에 멈춘 status) 정리.
+
+    NOTE: 자동 만료 삭제(purge_expired_jobs) 는 사용자 요청으로 비활성화.
+    Job은 사용자가 명시적으로 DELETE 하기 전까지 보존된다.
+    services/cleanup.purge_expired_jobs 함수 자체는 보존돼 있어 향후 필요 시
+    수동 호출이나 별도 엔드포인트로 다시 활성화할 수 있다.
+    """
     backup_database(app.state.settings)
     sweep_zombie_jobs(app.state.engine)
-    task = asyncio.create_task(_cleanup_loop(app))
-    try:
-        yield
-    finally:
-        task.cancel()
-        with suppress(asyncio.CancelledError):
-            await task
+    yield
 
 
 def create_app() -> FastAPI:

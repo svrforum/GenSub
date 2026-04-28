@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { Bookmark, PenLine, PanelLeftClose, Trash2, Video } from 'lucide-svelte';
 
-  import { api, ApiError, fetchConfig } from '$lib/api/jobs';
+  import { api, ApiError } from '$lib/api/jobs';
   import { memoApi } from '$lib/api/memo';
   import type { MemoListItemDto } from '$lib/api/types';
   import { current, openMemo, reset } from '$lib/stores/current';
@@ -209,14 +209,7 @@
   $: isProcessing = $current.screen === 'processing';
   $: groups = groupByDate($history);
 
-  let serverTtlHours: number | null = null;
-  onMount(async () => {
-    try {
-      const cfg = await fetchConfig();
-      serverTtlHours = cfg.job_ttl_hours;
-    } catch {
-      serverTtlHours = null;
-    }
+  onMount(() => {
     refreshMemos();
   });
 </script>
@@ -436,16 +429,12 @@
     </div>
   {/if}
 
-  <!-- 하단 설정 -->
+  <!-- 하단 안내 -->
   <div class="shrink-0 border-t border-black/5 dark:border-white/5 px-3 py-3">
     <div class="text-[12px] leading-relaxed text-text-secondary-light dark:text-text-secondary-dark">
-      {#if serverTtlHours === null}
-        보관 기간 정보를 불러오는 중…
-      {:else}
-        작업은 <strong class="text-text-primary-light dark:text-text-primary-dark">{serverTtlHours}시간</strong> 후 자동 삭제됩니다.
-        <br />
-        북마크한 작업은 만료되지 않아요.
-      {/if}
+      작업은 <strong class="text-text-primary-light dark:text-text-primary-dark">직접 삭제할 때까지 보관</strong>돼요.
+      <br />
+      디스크 공간이 부족해지면 정리해 주세요.
     </div>
   </div>
 </aside>

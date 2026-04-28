@@ -42,3 +42,5 @@ Thumbs.db
 
 # Playwright MCP 세션 디렉토리
 .playwright-mcp/
+memo-*.png
+test-*.png

@@ -45,8 +45,13 @@ def format_srt(segments: Iterable[SegmentData]) -> str:
 
 def format_vtt(segments: Iterable[SegmentData]) -> str:
     lines = ["WEBVTT", ""]
+    # cue 설정:
+    # - line:90%   하단에서 약간 위쪽
+    # - position:50% align:center  가로 중앙 정렬
+    # - size:80%   영상 가로폭의 80%로 제한 → 길어지면 자동 줄바꿈
+    cue_settings = "line:90% position:50% align:center size:80%"
     for seg in segments:
-        lines.append(f"{_ts_vtt(seg.start)} --> {_ts_vtt(seg.end)} line:90%")
+        lines.append(f"{_ts_vtt(seg.start)} --> {_ts_vtt(seg.end)} {cue_settings}")
         lines.append(seg.text)
         lines.append("")
     return "\n".join(lines)
