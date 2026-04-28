@@ -23,7 +23,7 @@ def test_empty_query_returns_empty_list(engine):
     assert search_all(engine, "   ") == []
 
 
-def _make_job(engine, jid: str, title: str):
+def _make_job(engine, jid: str, title: str, *, pinned: bool = False):
     job = Job(
         id=jid,
         source_url=f"https://e/{jid}",
@@ -31,6 +31,7 @@ def _make_job(engine, jid: str, title: str):
         model_name="small",
         status=JobStatus.ready,
         title=title,
+        pinned=pinned,
         expires_at=datetime.now(UTC) + timedelta(hours=24),
     )
     with Session(engine) as session:
@@ -152,3 +153,36 @@ def test_groups_results_in_order_job_memo_segment(engine):
     hits = search_all(engine, "search me")
     kinds = [h.kind for h in hits]
     assert kinds == ["job", "memo", "segment"]
+
+
+def test_pinned_jobs_appear_first_in_each_group(engine):
+    """북마크된 영상의 결과가 각 그룹(job/memo/segment) 내에서 먼저 나와야 한다."""
+    # 두 영상: j_old(오래됨, unpinned), j_pin(최근에 만든 게 아닌데 pinned)
+    _make_job(engine, "j_pin", "movies pinned old", pinned=True)
+    # 살짝 시간 차를 둬서 updated_at 으로는 j_old 가 더 최신이 되도록
+    import time
+    time.sleep(0.01)
+    _make_job(engine, "j_old", "movies recent unpinned", pinned=False)
+
+    # 양쪽에 자막 + 메모
+    _make_segment(engine, "j_pin", 0, "movies in pinned video")
+    _make_segment(engine, "j_old", 0, "movies in recent video")
+    _make_memo(engine, "j_pin", 0, memo_text="movies note pin", snap_text="movies in pinned video")
+    _make_memo(engine, "j_old", 0, memo_text="movies note old", snap_text="movies in recent video")
+
+    hits = search_all(engine, "movies")
+
+    # job 그룹: pinned 가 먼저
+    job_hits = [h for h in hits if h.kind == "job"]
+    assert job_hits[0].job_id == "j_pin"
+    assert job_hits[1].job_id == "j_old"
+
+    # memo 그룹: pinned 영상의 메모가 먼저
+    memo_hits = [h for h in hits if h.kind == "memo"]
+    assert memo_hits[0].job_id == "j_pin"
+    assert memo_hits[1].job_id == "j_old"
+
+    # segment 그룹: pinned 영상의 세그먼트가 먼저
+    seg_hits = [h for h in hits if h.kind == "segment"]
+    assert seg_hits[0].job_id == "j_pin"
+    assert seg_hits[1].job_id == "j_old"
