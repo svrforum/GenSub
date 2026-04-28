@@ -339,11 +339,14 @@
                     </div>
                     <!-- 호버 액션 (우측: 수정 + 삭제만) -->
                     {#if hoveredId === item.jobId || activeJobId === item.jobId}
+                      <!-- svelte-ignore a11y-no-static-element-interactions -->
+                      <!-- svelte-ignore a11y-click-events-have-key-events -->
                       <div
                         class="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5
                                bg-[#f7f7f8] dark:bg-[#171717] rounded-lg pl-1
                                {hoveredId === item.jobId ? 'opacity-100' : 'opacity-0'}
-                               transition-opacity duration-100"
+                               transition-opacity duration-100 cursor-pointer"
+                        on:click={() => openJob(item.jobId)}
                       >
                         <button
                           type="button"
