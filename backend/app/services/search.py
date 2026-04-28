@@ -28,7 +28,8 @@ def search_all(engine: Engine, query: str, limit: int = 50) -> list[SearchHit]:
     """자막 + 메모 + 영상 제목을 query로 부분 매치 검색.
 
     - 빈 query → 즉시 빈 리스트.
-    - 결과 순서: job → memo → segment, 각 그룹 내 updated_at desc.
+    - 결과 순서: job → memo → segment.
+    - 각 그룹 내: pinned(북마크) 영상 우선, 그 다음 updated_at desc.
     - INNER JOIN 으로 orphan segment/memo 자동 제외.
     - SQLite ilike 는 ASCII 에서 case-insensitive (한국어는 본래 case 없음).
     """
@@ -40,11 +41,11 @@ def search_all(engine: Engine, query: str, limit: int = 50) -> list[SearchHit]:
     hits: list[SearchHit] = []
 
     with Session(engine) as session:
-        # 1) Job titles
+        # 1) Job titles — pinned first
         job_stmt = (
             select(Job)
             .where(Job.title.ilike(pattern))  # type: ignore[union-attr]
-            .order_by(Job.updated_at.desc())  # type: ignore[union-attr]
+            .order_by(Job.pinned.desc(), Job.updated_at.desc())  # type: ignore[union-attr]
             .limit(limit)
         )
         job_result = session.exec(job_stmt)
@@ -55,7 +56,7 @@ def search_all(engine: Engine, query: str, limit: int = 50) -> list[SearchHit]:
                 job_title=job.title,
             ))
 
-        # 2) Memos (memo_text or snapshot text)
+        # 2) Memos — pinned job's memos first
         memo_stmt = (
             select(Memo, Job)
             .join(Job, Job.id == Memo.job_id)
@@ -63,7 +64,7 @@ def search_all(engine: Engine, query: str, limit: int = 50) -> list[SearchHit]:
                 (Memo.memo_text.ilike(pattern))  # type: ignore[union-attr]
                 | (Memo.segment_text_snapshot.ilike(pattern))  # type: ignore[union-attr]
             )
-            .order_by(Memo.updated_at.desc())  # type: ignore[union-attr]
+            .order_by(Job.pinned.desc(), Memo.updated_at.desc())  # type: ignore[union-attr]
             .limit(limit)
         )
         memo_result = session.exec(memo_stmt)
@@ -80,12 +81,12 @@ def search_all(engine: Engine, query: str, limit: int = 50) -> list[SearchHit]:
                 end=memo.segment_end,
             ))
 
-        # 3) Segments (live jobs only)
+        # 3) Segments — pinned job's segments first
         seg_stmt = (
             select(Segment, Job)
             .join(Job, Job.id == Segment.job_id)
             .where(Segment.text.ilike(pattern))  # type: ignore[union-attr]
-            .order_by(Job.updated_at.desc(), Segment.idx)  # type: ignore[union-attr]
+            .order_by(Job.pinned.desc(), Job.updated_at.desc(), Segment.idx)  # type: ignore[union-attr]
             .limit(limit)
         )
         seg_result = session.exec(seg_stmt)
