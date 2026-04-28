@@ -95,3 +95,20 @@ export interface JobMemoLiteDto {
   segment_idx: number;
   memo_text: string;
 }
+
+// 검색 기능 (2026-04-28 spec)
+export type SearchKind = 'job' | 'memo' | 'segment';
+
+export interface SearchHit {
+  kind: SearchKind;
+  job_id: string;
+  job_title: string | null;
+  // kind === 'segment' 또는 'memo' 일 때 채워짐
+  segment_idx?: number;
+  segment_text?: string;
+  start?: number;
+  end?: number;
+  // kind === 'memo' 일 때만
+  memo_id?: number;
+  memo_text?: string;
+}
