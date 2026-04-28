@@ -5,11 +5,21 @@
   import { initTheme, theme, toggleTheme } from '$lib/theme';
   import { initHistory } from '$lib/stores/history';
   import { current } from '$lib/stores/current';
+  import { searchOpen } from '$lib/stores/search';
   import Sidebar from '$lib/ui/Sidebar.svelte';
+  import SearchBar from '$lib/ui/SearchBar.svelte';
+  import SearchModal from '$lib/ui/SearchModal.svelte';
 
   $: isProcessing = $current.screen === 'processing';
 
   let sidebarCollapsed = false;
+
+  function handleGlobalKey(e: KeyboardEvent) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      searchOpen.set(true);
+    }
+  }
 
   onMount(() => {
     initTheme();
@@ -17,6 +27,8 @@
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       sidebarCollapsed = true;
     }
+    window.addEventListener('keydown', handleGlobalKey);
+    return () => window.removeEventListener('keydown', handleGlobalKey);
   });
 </script>
 
@@ -28,10 +40,10 @@
 {/if}
 
 <header
-  class="fixed top-0 z-10 flex items-center justify-between px-5 h-14 transition-all duration-300 ease-spring
+  class="fixed top-0 z-10 flex items-center gap-3 px-5 h-14 transition-all duration-300 ease-spring
          {sidebarCollapsed ? 'left-0' : 'left-[260px]'} right-0"
 >
-  <div class="flex items-center gap-2">
+  <div class="flex items-center gap-2 shrink-0">
     {#if sidebarCollapsed}
       <button
         type="button"
@@ -45,11 +57,17 @@
       <span class="text-body font-bold tracking-tight">GenSub</span>
     {/if}
   </div>
+
+  <!-- SearchBar 가운데 영역 -->
+  <div class="flex-1 flex justify-center">
+    <SearchBar />
+  </div>
+
   <button
     type="button"
     on:click={toggleTheme}
     class="p-2 rounded-xl hover:bg-divider-light dark:hover:bg-surface-dark-elevated
-           text-text-secondary-light dark:text-text-secondary-dark transition-colors"
+           text-text-secondary-light dark:text-text-secondary-dark transition-colors shrink-0"
     aria-label="다크 모드 전환"
   >
     {#if $theme === 'dark'}
@@ -66,3 +84,5 @@
 >
   <slot />
 </main>
+
+<SearchModal />
