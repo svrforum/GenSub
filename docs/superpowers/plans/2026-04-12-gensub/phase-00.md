@@ -95,25 +95,25 @@ version = "0.1.0"
 description = "GenSub backend - FastAPI API + Whisper worker"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.111",
-    "uvicorn[standard]>=0.30",
-    "sqlmodel>=0.0.16",
-    "pydantic-settings>=2.3",
-    "python-multipart>=0.0.9",
-    "sse-starlette>=2.1",
-    "yt-dlp>=2024.7.1",
-    "faster-whisper>=1.0.3",
-    "ffmpeg-python>=0.2",
-    "httpx>=0.27",
+ "fastapi>=0.111",
+ "uvicorn[standard]>=0.30",
+ "sqlmodel>=0.0.16",
+ "pydantic-settings>=2.3",
+ "python-multipart>=0.0.9",
+ "sse-starlette>=2.1",
+ "yt-dlp>=2024.7.1",
+ "faster-whisper>=1.0.3",
+ "ffmpeg-python>=0.2",
+ "httpx>=0.27",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest>=8.2",
-    "pytest-asyncio>=0.23",
-    "pytest-cov>=5.0",
-    "ruff>=0.5",
-    "mypy>=1.10",
+ "pytest>=8.2",
+ "pytest-asyncio>=0.23",
+ "pytest-cov>=5.0",
+ "ruff>=0.5",
+ "mypy>=1.10",
 ]
 
 [tool.pytest.ini_options]
@@ -166,32 +166,32 @@ Write `frontend/package.json`:
 
 ```json
 {
-  "name": "gensub-frontend",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
-  },
-  "devDependencies": {
-    "@sveltejs/adapter-static": "^3.0.2",
-    "@sveltejs/kit": "^2.5.0",
-    "@sveltejs/vite-plugin-svelte": "^3.1.0",
-    "svelte": "^4.2.0",
-    "svelte-check": "^3.8.0",
-    "typescript": "^5.5.0",
-    "vite": "^5.3.0",
-    "tailwindcss": "^3.4.0",
-    "autoprefixer": "^10.4.0",
-    "postcss": "^8.4.0"
-  },
-  "dependencies": {
-    "@fontsource-variable/pretendard": "^2.0.0",
-    "lucide-svelte": "^0.400.0"
-  }
+ "name": "gensub-frontend",
+ "version": "0.1.0",
+ "private": true,
+ "type": "module",
+ "scripts": {
+ "dev": "vite dev",
+ "build": "vite build",
+ "preview": "vite preview",
+ "check": "svelte-check --tsconfig ./tsconfig.json"
+ },
+ "devDependencies": {
+ "@sveltejs/adapter-static": "^3.0.2",
+ "@sveltejs/kit": "^2.5.0",
+ "@sveltejs/vite-plugin-svelte": "^3.1.0",
+ "svelte": "^4.2.0",
+ "svelte-check": "^3.8.0",
+ "typescript": "^5.5.0",
+ "vite": "^5.3.0",
+ "tailwindcss": "^3.4.0",
+ "autoprefixer": "^10.4.0",
+ "postcss": "^8.4.0"
+ },
+ "dependencies": {
+ "@fontsource-variable/pretendard": "^2.0.0",
+ "lucide-svelte": "^0.400.0"
+ }
 }
 ```
 
@@ -204,19 +204,19 @@ import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 export default {
-  preprocess: vitePreprocess(),
-  kit: {
-    adapter: adapter({
-      pages: 'build',
-      assets: 'build',
-      fallback: 'index.html',
-      precompress: false,
-      strict: false
-    }),
-    alias: {
-      $lib: 'src/lib'
-    }
-  }
+ preprocess: vitePreprocess(),
+ kit: {
+ adapter: adapter({
+ pages: 'build',
+ assets: 'build',
+ fallback: 'index.html',
+ precompress: false,
+ strict: false
+ }),
+ alias: {
+ $lib: 'src/lib'
+ }
+ }
 };
 ```
 
@@ -229,13 +229,13 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [sveltekit()],
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': 'http://localhost:8000'
-    }
-  }
+ plugins: [sveltekit()],
+ server: {
+ port: 5173,
+ proxy: {
+ '/api': 'http://localhost:8000'
+ }
+ }
 });
 ```
 
@@ -243,18 +243,18 @@ Write `frontend/tsconfig.json`:
 
 ```json
 {
-  "extends": "./.svelte-kit/tsconfig.json",
-  "compilerOptions": {
-    "allowJs": true,
-    "checkJs": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "sourceMap": true,
-    "strict": true,
-    "moduleResolution": "bundler"
-  }
+ "extends": "./.svelte-kit/tsconfig.json",
+ "compilerOptions": {
+ "allowJs": true,
+ "checkJs": true,
+ "esModuleInterop": true,
+ "forceConsistentCasingInFileNames": true,
+ "resolveJsonModule": true,
+ "skipLibCheck": true,
+ "sourceMap": true,
+ "strict": true,
+ "moduleResolution": "bundler"
+ }
 }
 ```
 
@@ -265,16 +265,16 @@ Write `frontend/src/app.html`:
 ```html
 <!doctype html>
 <html lang="ko" %sveltekit.theme%>
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%sveltekit.assets%/favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>GenSub</title>
-    %sveltekit.head%
-  </head>
-  <body>
-    <div style="display: contents">%sveltekit.body%</div>
-  </body>
+ <head>
+ <meta charset="utf-8" />
+ <link rel="icon" href="%sveltekit.assets%/favicon.png" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>GenSub</title>
+ %sveltekit.head%
+ </head>
+ <body>
+ <div style="display: contents">%sveltekit.body%</div>
+ </body>
 </html>
 ```
 
@@ -284,7 +284,7 @@ Write `frontend/src/app.css`:
 @import '@fontsource-variable/pretendard';
 
 :root {
-  font-family: 'Pretendard Variable', -apple-system, 'SF Pro Display', system-ui, sans-serif;
+ font-family: 'Pretendard Variable', -apple-system, 'SF Pro Display', system-ui, sans-serif;
 }
 ```
 
@@ -292,7 +292,7 @@ Write `frontend/src/routes/+layout.svelte`:
 
 ```svelte
 <script lang="ts">
-  import '../app.css';
+ import '../app.css';
 </script>
 
 <slot />
@@ -367,12 +367,12 @@ RUN npm run build
 FROM python:3.11-slim AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ffmpeg \
-        mkvtoolnix \
-        libsndfile1 \
-        ca-certificates \
-        curl \
-    && rm -rf /var/lib/apt/lists/*
+ ffmpeg \
+ mkvtoolnix \
+ libsndfile1 \
+ ca-certificates \
+ curl \
+ && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir uv
 
@@ -413,55 +413,55 @@ Write `compose.yaml`:
 
 ```yaml
 services:
-  api:
-    build: .
-    image: gensub:latest
-    container_name: gensub-api
-    ports:
-      - "${GENSUB_PORT:-8000}:8000"
-    environment:
-      GENSUB_ROLE: api
-      DATABASE_URL: sqlite:////data/db/jobs.db
-      MEDIA_DIR: /data/media
-      MODEL_CACHE_DIR: /data/models
-      JOB_TTL_HOURS: ${JOB_TTL_HOURS:-24}
-      MAX_VIDEO_MINUTES: ${MAX_VIDEO_MINUTES:-90}
-      DEFAULT_MODEL: ${DEFAULT_MODEL:-small}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-*}
-    volumes:
-      - ./data:/data
-    command: >
-      uv run --no-sync uvicorn app.main:app
-      --host 0.0.0.0 --port 8000
-      --proxy-headers
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+ api:
+ build: .
+ image: gensub:latest
+ container_name: gensub-api
+ ports:
+ - "${GENSUB_PORT:-8000}:8000"
+ environment:
+ GENSUB_ROLE: api
+ DATABASE_URL: sqlite:////data/db/jobs.db
+ MEDIA_DIR: /data/media
+ MODEL_CACHE_DIR: /data/models
+ JOB_TTL_HOURS: ${JOB_TTL_HOURS:-24}
+ MAX_VIDEO_MINUTES: ${MAX_VIDEO_MINUTES:-90}
+ DEFAULT_MODEL: ${DEFAULT_MODEL:-small}
+ OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+ CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-*}
+ volumes:
+ - ./data:/data
+ command: >
+ uv run --no-sync uvicorn app.main:app
+ --host 0.0.0.0 --port 8000
+ --proxy-headers
+ restart: unless-stopped
+ healthcheck:
+ test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health"]
+ interval: 30s
+ timeout: 5s
+ retries: 3
 
-  worker:
-    build: .
-    image: gensub:latest
-    container_name: gensub-worker
-    depends_on:
-      - api
-    environment:
-      GENSUB_ROLE: worker
-      DATABASE_URL: sqlite:////data/db/jobs.db
-      MEDIA_DIR: /data/media
-      MODEL_CACHE_DIR: /data/models
-      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
-      DEFAULT_MODEL: ${DEFAULT_MODEL:-small}
-      COMPUTE_TYPE: ${COMPUTE_TYPE:-int8}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-    volumes:
-      - ./data:/data
-    command: >
-      uv run --no-sync python -m worker.main
-    restart: unless-stopped
+ worker:
+ build: .
+ image: gensub:latest
+ container_name: gensub-worker
+ depends_on:
+ - api
+ environment:
+ GENSUB_ROLE: worker
+ DATABASE_URL: sqlite:////data/db/jobs.db
+ MEDIA_DIR: /data/media
+ MODEL_CACHE_DIR: /data/models
+ WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
+ DEFAULT_MODEL: ${DEFAULT_MODEL:-small}
+ COMPUTE_TYPE: ${COMPUTE_TYPE:-int8}
+ OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+ volumes:
+ - ./data:/data
+ command: >
+ uv run --no-sync python -m worker.main
+ restart: unless-stopped
 ```
 
 - [ ] **Step 2: .env.example 작성**
@@ -485,20 +485,20 @@ Write `compose.override.yaml.example`:
 
 ```yaml
 # 개발용. 이 파일을 compose.override.yaml로 복사해서 사용:
-#   cp compose.override.yaml.example compose.override.yaml
+# cp compose.override.yaml.example compose.override.yaml
 services:
-  api:
-    volumes:
-      - ./backend:/app
-      - ./data:/data
-    command: >
-      uv run --no-sync uvicorn app.main:app
-      --host 0.0.0.0 --port 8000
-      --reload
-  worker:
-    volumes:
-      - ./backend:/app
-      - ./data:/data
+ api:
+ volumes:
+ - ./backend:/app
+ - ./data:/data
+ command: >
+ uv run --no-sync uvicorn app.main:app
+ --host 0.0.0.0 --port 8000
+ --reload
+ worker:
+ volumes:
+ - ./backend:/app
+ - ./data:/data
 ```
 
 - [ ] **Step 4: README.md 작성**

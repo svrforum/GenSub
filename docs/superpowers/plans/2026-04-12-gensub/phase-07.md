@@ -22,9 +22,9 @@ Run:
 ```bash
 cd /Users/loki/GenSub/backend
 DATABASE_URL="sqlite:///$PWD/../data/db/jobs.db" \
-  MEDIA_DIR="$PWD/../data/media" \
-  MODEL_CACHE_DIR="$PWD/../data/models" \
-  uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+ MEDIA_DIR="$PWD/../data/media" \
+ MODEL_CACHE_DIR="$PWD/../data/models" \
+ uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
 API_PID=$!
 sleep 2
 curl -fsS http://localhost:8000/api/health | tee /dev/stderr
@@ -78,12 +78,12 @@ Run: `docker compose up -d`
 Run:
 ```bash
 for i in $(seq 1 15); do
-  if curl -fsS http://localhost:8000/api/health > /dev/null; then
-    echo "API ready"
-    break
-  fi
-  echo "waiting... $i"
-  sleep 2
+ if curl -fsS http://localhost:8000/api/health > /dev/null; then
+ echo "API ready"
+ break
+ fi
+ echo "waiting... $i"
+ sleep 2
 done
 curl -fsS http://localhost:8000/api/health
 ```
@@ -115,8 +115,8 @@ Expected: `default_model`, `available_models`, `max_video_minutes` 등이 포함
 Run:
 ```bash
 JOB_ID=$(curl -fsS -X POST http://localhost:8000/api/jobs \
-  -H "Content-Type: application/json" \
-  -d '{"url":"<YOUR_SHORT_VIDEO_URL>","model":"tiny"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['job_id'])")
+ -H "Content-Type: application/json" \
+ -d '{"url":"<YOUR_SHORT_VIDEO_URL>","model":"tiny"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['job_id'])")
 echo "job_id=$JOB_ID"
 ```
 
@@ -127,12 +127,12 @@ Expected: 작업 id가 출력됨. `tiny` 모델은 빠른 검증용 (정확도�
 Run:
 ```bash
 while true; do
-  STATUS=$(curl -fsS http://localhost:8000/api/jobs/$JOB_ID | python3 -c "import sys,json;d=json.load(sys.stdin);print(d['status'],d['progress'],d.get('stage_message',''))")
-  echo "$STATUS"
-  case "$STATUS" in
-    ready*|failed*) break ;;
-  esac
-  sleep 2
+ STATUS=$(curl -fsS http://localhost:8000/api/jobs/$JOB_ID | python3 -c "import sys,json;d=json.load(sys.stdin);print(d['status'],d['progress'],d.get('stage_message',''))")
+ echo "$STATUS"
+ case "$STATUS" in
+ ready*|failed*) break ;;
+ esac
+ sleep 2
 done
 ```
 Expected: `downloading → transcribing → ready` 순서로 상태가 바뀌고 마지막에 `ready 1.0 준비됐어요`가 출력됨.

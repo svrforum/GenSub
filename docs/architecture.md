@@ -2,7 +2,7 @@
 
 이 문서는 **현재 구현된 시스템의 상태**를 기록한다. 설계 의도(왜 이렇게 만들었나)는
 [`docs/superpowers/specs/2026-04-11-gensub-design.md`](superpowers/specs/2026-04-11-gensub-design.md)를, 개발 규약은
-[`CLAUDE.md`](../CLAUDE.md)를 참고.
+[`CONVENTIONS.md`](../CONVENTIONS.md)를 참고.
 
 구조가 바뀌면 **같은 PR**에서 이 문서도 업데이트한다.
 
@@ -105,7 +105,7 @@ backend/
 └── tests/                  # pytest (38개 예상)
 ```
 
-**레이어 규칙** (상세는 [`CLAUDE.md`](../CLAUDE.md) §2):
+**레이어 규칙** (상세는 [`CONVENTIONS.md`](../CONVENTIONS.md) §2):
 - `api/` 라우터는 `services/`만 호출. Session 직접 열기 금지.
 - Job 상태 전이는 `services/job_state.py` 전용.
 - 파이프라인은 `services/pipeline.py` 소유, 워커는 폴링/dispatch만.
@@ -313,4 +313,4 @@ Named volume **`gensub-data`** 하나에 `/data/{db,media,models}` 전부 담김
 
 - [초기 설계 스펙](superpowers/specs/2026-04-11-gensub-design.md) — 설계 의도 (2026-04-11)
 - [안정성 리팩토링 스펙](superpowers/specs/2026-04-18-stability-refactor-design.md) — 본 문서가 반영하는 리팩토링 (2026-04-18)
-- [개발 규약](../CLAUDE.md)
+- [개발 규약](../CONVENTIONS.md)

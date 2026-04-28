@@ -66,7 +66,7 @@ import sqlite3
 conn = sqlite3.connect('/data/db/jobs.db')
 cur = conn.execute(\"SELECT name FROM sqlite_master WHERE type='table' ORDER BY name\")
 for row in cur.fetchall():
-    print(row[0])
+ print(row[0])
 "
 ```
 
@@ -207,36 +207,36 @@ Edit `docs/architecture.md`. §4 표의 마지막 행(키보드 단축키 아래
 같은 파일의 frontend 트리에 메모 파일들 삽입:
 
 ```markdown
-    ├── api/
-    │   ├── client.ts       # fetch 래퍼
-    │   ├── jobs.ts         # job CRUD + 업로드 + burn
-    │   ├── memo.ts         # memoApi (toggleSave/update/delete/list) ← 신규
-    │   ├── events.ts       # EventSource 구독
-    │   └── types.ts        # 백엔드 schemas와 대응
-    ├── stores/
-    │   ├── current.ts      # {screen, jobId, initialTime?, ...}  ← initialTime 추가
-    │   ├── history.ts      # localStorage 최근 작업 + 서버 동기화
-    │   ├── memos.ts        # 전역 메모 리스트 (MemoListItemDto[]) ← 신규
-    │   └── jobMemos.ts     # 현재 Job의 segment→memo 맵 ← 신규
-    ...
-    └── ui/
-        ├── Sidebar.svelte, BurnSheet.svelte, ClipSheet.svelte
-        ├── MemoCard.svelte             ← 신규 (사이드바 메모 탭 아이템)
-        ├── SegmentMemo.svelte          ← 신규 (세그먼트 📎 + 인라인 편집)
-        ...
+ ├── api/
+ │ ├── client.ts # fetch 래퍼
+ │ ├── jobs.ts # job CRUD + 업로드 + burn
+ │ ├── memo.ts # memoApi (toggleSave/update/delete/list) ← 신규
+ │ ├── events.ts # EventSource 구독
+ │ └── types.ts # 백엔드 schemas와 대응
+ ├── stores/
+ │ ├── current.ts # {screen, jobId, initialTime?, ...} ← initialTime 추가
+ │ ├── history.ts # localStorage 최근 작업 + 서버 동기화
+ │ ├── memos.ts # 전역 메모 리스트 (MemoListItemDto[]) ← 신규
+ │ └── jobMemos.ts # 현재 Job의 segment→memo 맵 ← 신규
+ ...
+ └── ui/
+ ├── Sidebar.svelte, BurnSheet.svelte, ClipSheet.svelte
+ ├── MemoCard.svelte ← 신규 (사이드바 메모 탭 아이템)
+ ├── SegmentMemo.svelte ← 신규 (세그먼트 📎 + 인라인 편집)
+ ...
 ```
 
 backend 트리에도 유사하게:
 ```markdown
 backend/app/
 ├── api/
-│   ├── memo.py                 # Memo REST (POST/GET/PATCH/DELETE) ← 신규
-│   ...
+│ ├── memo.py # Memo REST (POST/GET/PATCH/DELETE) ← 신규
+│ ...
 ├── services/
-│   ├── memo.py                 # Memo CRUD + toggle + global view ← 신규
-│   ...
+│ ├── memo.py # Memo CRUD + toggle + global view ← 신규
+│ ...
 └── models/
-    ├── memo.py                 # Memo SQLModel ← 신규
+ ├── memo.py # Memo SQLModel ← 신규
 ```
 
 - [ ] **Step 4: §3 Job 상태머신 다이어그램 하단에 "메모와 자동 pin" 한 단락 추가**
@@ -262,10 +262,8 @@ docs(architecture): add memo feature to component map and catalog
 
 - 기능 카탈로그 §4에 메모 관련 6행 추가
 - 컴포넌트 지도 §2에 신규 파일 (api/memo, stores/memos, jobMemos,
-  ui/MemoCard, SegmentMemo, backend models/memo, services/memo, api/memo)
+ ui/MemoCard, SegmentMemo, backend models/memo, services/memo, api/memo)
 - §3.1 신설: 메모 auto-pin 동작 + cascade 설명
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -312,16 +310,14 @@ Phase 1~5:
 - 5개 REST 엔드포인트 (POST/GET x2/PATCH/DELETE)
 - Job 삭제 시 memo cascade + 다이얼로그 경고
 - 프론트: MemoDto/jobMemos/memos 스토어, SegmentMemo 컴포넌트,
-  사이드바 "영상/메모" 탭, MemoCard, VideoPlayer onLoadedMetadata,
-  ReadyScreen initialTime reactive seek
+ 사이드바 "영상/메모" 탭, MemoCard, VideoPlayer onLoadedMetadata,
+ ReadyScreen initialTime reactive seek
 
 데이터 안전성: 새 테이블만 추가. 기존 job/segment 스키마 무변경.
 init_db의 create_all로 자동 생성, 기존 데이터 무영향.
 배포 전 자동 DB 백업(R6) 작동.
 
 테스트: 기존 95 → memo feature 후 ~141 passed (46개 신규).
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )" 2>&1 | tail -5
 ```

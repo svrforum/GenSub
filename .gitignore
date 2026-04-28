@@ -44,3 +44,9 @@ Thumbs.db
 .playwright-mcp/
 memo-*.png
 test-*.png
+
+# Serena MCP 로컬 설정 (개발 도구)
+.serena/
+
+# Claude Code 세션 로컬 규약 (공개 동등 문서는 CONVENTIONS.md)
+CLAUDE.md

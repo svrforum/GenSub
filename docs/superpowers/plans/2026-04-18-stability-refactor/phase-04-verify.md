@@ -148,9 +148,9 @@ docker compose up -d
 5. **다운로드**: `.srt` 칩 클릭 → 파일 다운로드.
 6. **Burn**: "다운로드" 버튼 → Bottom Sheet 오픈 → "시작하기" 클릭 → 진행률 다시 움직임.
 7. **Burn 취소 (R3 검증!)**: Burn 중에 "취소" 클릭. **10초 내** burning → failed 전이 확인. 로그로 ffmpeg 프로세스 종료 확인:
-   ```bash
-   docker logs gensub-worker --tail 30
-   ```
+ ```bash
+ docker logs gensub-worker --tail 30
+ ```
 8. **Burn 재시도**: 새 burn 요청 → 정상 완료 → `burned.mp4` 다운로드.
 9. **Sidebar**: 사이드바 열기 → "보관 기간" 영역이 **"N시간 후 자동 삭제"** 텍스트로 표시(선택 UI가 아니라) — R4 검증.
 10. **북마크**: 작업 하나를 pin → API 호출 성공, 새로고침 후에도 pinned 유지 — R2 검증.
@@ -168,7 +168,7 @@ docker compose up -d
 ```bash
 docker compose down
 # 테스트 중 만들어진 작업이 있으면 필요 시 volume 비우기:
-# docker volume rm gensub-data   # ⚠️ 데이터 전부 삭제
+# docker volume rm gensub-data # ⚠️ 데이터 전부 삭제
 ```
 
 ---
