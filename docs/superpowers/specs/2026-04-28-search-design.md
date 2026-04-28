@@ -109,6 +109,42 @@ def search(request: Request, q: str = "", limit: int = 50) -> dict:
 
 `main.py`에 `app.include_router(search_router)` 추가.
 
+**응답 예시** (`q=영화` 검색 결과):
+
+```json
+{
+  "items": [
+    {
+      "kind": "job",
+      "job_id": "059ddd86...",
+      "job_title": "영화 추천 영상"
+    },
+    {
+      "kind": "memo",
+      "job_id": "abc123...",
+      "job_title": "영상 제목",
+      "memo_id": 5,
+      "memo_text": "이 영화 추천",
+      "segment_idx": 12,
+      "segment_text": "Movies coming out in 2026.",
+      "start": 45.2,
+      "end": 48.7
+    },
+    {
+      "kind": "segment",
+      "job_id": "059ddd86...",
+      "job_title": "Why movies these days SUCK",
+      "segment_idx": 3,
+      "segment_text": "I love this movie scene.",
+      "start": 12.0,
+      "end": 14.5
+    }
+  ]
+}
+```
+
+키 이름은 `SearchHit` dataclass(§4.2) / TS 인터페이스(§5.1)와 정확히 일치.
+
 ### 4.4 테스트
 
 `backend/tests/test_search.py` (신규):
