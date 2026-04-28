@@ -67,8 +67,9 @@ def test_toggle_deletes_memo_when_empty_text(engine, job_with_segment):
     assert result.memo is None
 
     with Session(engine) as session:
-        count = session.query(Memo).filter(Memo.job_id == "job1").count()
-        assert count == 0
+        from sqlmodel import select
+        result = session.exec(select(Memo).where(Memo.job_id == "job1"))
+        assert len(list(result.all())) == 0
 
 
 def test_toggle_conflict_when_memo_has_text(engine, job_with_segment):

@@ -14,10 +14,8 @@ services:
       DATABASE_URL: sqlite:////data/db/jobs.db
       MEDIA_DIR: /data/media
       MODEL_CACHE_DIR: /data/models
-      JOB_TTL_HOURS: ${JOB_TTL_HOURS:-24}
       MAX_VIDEO_MINUTES: ${MAX_VIDEO_MINUTES:-90}
       DEFAULT_MODEL: ${DEFAULT_MODEL:-small}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-*}
     volumes:
       - gensub-data:/data
@@ -47,7 +45,6 @@ services:
       WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
       DEFAULT_MODEL: ${DEFAULT_MODEL:-small}
       COMPUTE_TYPE: ${COMPUTE_TYPE:-int8}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     volumes:
       - gensub-data:/data
     command: >

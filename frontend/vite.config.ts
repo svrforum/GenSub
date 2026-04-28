@@ -8,5 +8,10 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:8000'
     }
+  },
+  test: {
+    include: ['src/**/*.{test,spec}.{js,ts}'],
+    environment: 'node',
+    globals: true,
   }
 });
