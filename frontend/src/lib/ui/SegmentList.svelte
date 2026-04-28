@@ -12,6 +12,12 @@
   export let onJump: (t: number) => void = () => {};
   export let language: string | null = null;
 
+  /** 검색 매치된 segment idx 집합. 노란 배경 강조. */
+  export let matchedIdxs: Set<number> = new Set();
+
+  /** 현재 활성 매치 segment idx. 더 진한 강조. */
+  export let currentMatchIdx: number | null = null;
+
   let activeIdx = -1;
   let editingIdx: number | null = null;
   let containerEl: HTMLDivElement;
@@ -27,6 +33,14 @@
         el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
       });
     }
+  }
+
+  // 검색 현재 매치로 스크롤
+  $: if (currentMatchIdx !== null) {
+    queueMicrotask(() => {
+      const el = document.querySelector(`[data-segment-idx="${currentMatchIdx}"]`);
+      el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
   }
 
   function fmtTime(sec: number): string {
@@ -114,13 +128,16 @@
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
       data-idx={i}
+      data-segment-idx={seg.idx}
       class="group w-full text-left p-3 rounded-xl cursor-pointer transition-all select-none
              {selectedIndices.has(i)
                ? 'bg-brand/10 ring-1 ring-brand/30'
                : activeIdx === i
                  ? 'bg-brand/5 border-l-4 border-brand'
                  : 'hover:bg-black/[0.03] dark:hover:bg-white/[0.03]'}
-             {isLowConfidence(seg) ? 'bg-warning/10' : ''}"
+             {isLowConfidence(seg) ? 'bg-warning/10' : ''}
+             {matchedIdxs.has(seg.idx) ? 'ring-2 ring-yellow-400/40' : ''}
+             {currentMatchIdx === seg.idx ? 'bg-yellow-400/15 ring-2 ring-yellow-500/60' : ''}"
       on:click={(e) => handleClick(i, e)}
     >
       <div class="text-caption mb-1 flex items-center justify-between
