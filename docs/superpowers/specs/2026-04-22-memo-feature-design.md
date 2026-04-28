@@ -51,26 +51,26 @@ from sqlmodel import Field, SQLModel
 
 
 def _utcnow() -> datetime:
-    return datetime.now(UTC)
+ return datetime.now(UTC)
 
 
 class Memo(SQLModel, table=True):
-    __tablename__ = "memo"
-    __table_args__ = (UniqueConstraint("job_id", "segment_idx", name="uq_memo_job_segment"),)
+ __tablename__ = "memo"
+ __table_args__ = (UniqueConstraint("job_id", "segment_idx", name="uq_memo_job_segment"),)
 
-    id: int | None = Field(default=None, primary_key=True)
-    job_id: str = Field(index=True)             # Job.id 참조. FK 없음 (스냅샷 기반 복원 허용).
-    segment_idx: int
-    memo_text: str = Field(default="", max_length=500)
+ id: int | None = Field(default=None, primary_key=True)
+ job_id: str = Field(index=True) # Job.id 참조. FK 없음 (스냅샷 기반 복원 허용).
+ segment_idx: int
+ memo_text: str = Field(default="", max_length=500)
 
-    # 스냅샷 필드: Job/Segment가 사라져도 리스트에 남김.
-    segment_text_snapshot: str
-    segment_start: float
-    segment_end: float
-    job_title_snapshot: str | None = None
+ # 스냅샷 필드: Job/Segment가 사라져도 리스트에 남김.
+ segment_text_snapshot: str
+ segment_start: float
+ segment_end: float
+ job_title_snapshot: str | None = None
 
-    created_at: datetime = Field(default_factory=_utcnow)
-    updated_at: datetime = Field(default_factory=_utcnow)
+ created_at: datetime = Field(default_factory=_utcnow)
+ updated_at: datetime = Field(default_factory=_utcnow)
 ```
 
 **주의**: SQLite는 SQL-level VARCHAR 길이를 강제하지 않는다. `max_length=500` 은 Pydantic 레벨 검증이므로, API 입력(`memo_text` body) 에 Pydantic 스키마로 같은 제약을 걸어 이중 방어한다.
@@ -118,30 +118,30 @@ Body: (없음)
 동작:
 1. `job_id` / `segment_idx` 유효성 확인. 해당 Segment 없으면 `404`.
 2. 이미 메모가 있는가?
-   - **없음**: 생성. Segment의 `text`·`start`·`end`·Job `title` 을 스냅샷으로 기록. `memo_text=""`. 응답 `201 {"ok": true, "action": "created", "memo": {...}}`.
-   - **있음 + `memo_text`가 빈 문자열**: 삭제(toggle-off). 응답 `200 {"ok": true, "action": "deleted"}`.
-   - **있음 + `memo_text`에 내용 있음**: `409 Conflict {"detail": "memo_has_text", "memo_id": <id>}`. 프론트가 확인 다이얼로그 후 `DELETE /api/memos/{id}` 로 명시적 삭제. **실수로 메모 내용을 잃는 것 방지**.
+ - **없음**: 생성. Segment의 `text`·`start`·`end`·Job `title` 을 스냅샷으로 기록. `memo_text=""`. 응답 `201 {"ok": true, "action": "created", "memo": {...}}`.
+ - **있음 + `memo_text`가 빈 문자열**: 삭제(toggle-off). 응답 `200 {"ok": true, "action": "deleted"}`.
+ - **있음 + `memo_text`에 내용 있음**: `409 Conflict {"detail": "memo_has_text", "memo_id": <id>}`. 프론트가 확인 다이얼로그 후 `DELETE /api/memos/{id}` 로 명시적 삭제. **실수로 메모 내용을 잃는 것 방지**.
 3. 생성 시 Job `pinned=true` 자동 세팅 (기존 `services.jobs.pin_job` 재사용; 이미 pinned면 no-op).
 
 ### 4.3 GET 전역 리스트 응답 포맷
 
 ```json
 {
-  "items": [
-    {
-      "id": 1,
-      "job_id": "059ddd86…",
-      "segment_idx": 12,
-      "memo_text": "이 표현 좋네",
-      "segment_text": "Movies coming out in 2026.",
-      "start": 45.2,
-      "end": 48.7,
-      "job_title": "Why movies these days SUCK…",
-      "job_alive": true,
-      "created_at": "2026-04-22T10:00:00+00:00",
-      "updated_at": "2026-04-22T10:05:00+00:00"
-    }
-  ]
+ "items": [
+ {
+ "id": 1,
+ "job_id": "059ddd86…",
+ "segment_idx": 12,
+ "memo_text": "이 표현 좋네",
+ "segment_text": "Movies coming out in 2026.",
+ "start": 45.2,
+ "end": 48.7,
+ "job_title": "Why movies these days SUCK…",
+ "job_alive": true,
+ "created_at": "2026-04-22T10:00:00+00:00",
+ "updated_at": "2026-04-22T10:05:00+00:00"
+ }
+ ]
 }
 ```
 
@@ -157,8 +157,8 @@ job_title = current_job.title if current_job else memo.job_title_snapshot
 ### 4.4 PATCH / DELETE
 
 ```
-PATCH /api/memos/{memo_id}   Body: {"memo_text": "..."}   → 응답: 수정된 memo
-DELETE /api/memos/{memo_id}                               → 응답: {"ok": true}
+PATCH /api/memos/{memo_id} Body: {"memo_text": "..."} → 응답: 수정된 memo
+DELETE /api/memos/{memo_id} → 응답: {"ok": true}
 ```
 
 ### 4.5 Job 삭제와 cascade
@@ -181,15 +181,15 @@ DELETE /api/memos/{memo_id}                               → 응답: {"ok": tru
 `Sidebar.svelte` 상단에 탭 추가:
 
 ```
-┌ [G] 새 자막              [⇤] ┐
+┌ [G] 새 자막 [⇤] ┐
 ├──────────────────────────────┤
-│  ┌─────────┬─────────┐       │
-│  │ 영상 2  │ 메모 5  │       │
-│  └─────────┴─────────┘       │
+│ ┌─────────┬─────────┐ │
+│ │ 영상 2 │ 메모 5 │ │
+│ └─────────┴─────────┘ │
 ├──────────────────────────────┤
-│  (선택된 탭 내용)             │
+│ (선택된 탭 내용) │
 ├──────────────────────────────┤
-│  작업은 24시간 후 자동 삭제… │
+│ 작업은 24시간 후 자동 삭제… │
 └──────────────────────────────┘
 ```
 
@@ -202,16 +202,16 @@ DELETE /api/memos/{memo_id}                               → 응답: {"ok": tru
 
 ```svelte
 {#if $memos.length === 0}
-  <EmptyState>
-    아직 저장한 문장이 없어요.
-    자막 세그먼트 오른쪽 📎 버튼으로 저장하면 여기에 모여요.
-  </EmptyState>
+ <EmptyState>
+ 아직 저장한 문장이 없어요.
+ 자막 세그먼트 오른쪽 📎 버튼으로 저장하면 여기에 모여요.
+ </EmptyState>
 {:else}
-  <ul>
-    {#each $memos as memo (memo.id)}
-      <MemoCard {memo} onOpen={openMemo} onDelete={deleteMemo} />
-    {/each}
-  </ul>
+ <ul>
+ {#each $memos as memo (memo.id)}
+ <MemoCard {memo} onOpen={openMemo} onDelete={deleteMemo} />
+ {/each}
+ </ul>
 {/if}
 ```
 
@@ -225,13 +225,13 @@ DELETE /api/memos/{memo_id}                               → 응답: {"ok": tru
 카드 클릭 → `openMemo(memo)`:
 ```ts
 current.set({
-  screen: 'ready',
-  jobId: memo.job_id,
-  initialTime: memo.start,   // ← 신규
-  job: null,
-  progress: 1,
-  stageMessage: '',
-  errorMessage: null,
+ screen: 'ready',
+ jobId: memo.job_id,
+ initialTime: memo.start, // ← 신규
+ job: null,
+ progress: 1,
+ stageMessage: '',
+ errorMessage: null,
 });
 ```
 
@@ -241,14 +241,14 @@ current.set({
 
 ```
 ┌─────────────────────────────────────┐
-│  ▶  0:45 → 0:48               📎    │  (미저장 — outline 아이콘)
-│     Movies coming out in 2026.      │
+│ ▶ 0:45 → 0:48 📎 │ (미저장 — outline 아이콘)
+│ Movies coming out in 2026. │
 └─────────────────────────────────────┘
 
 ┌─────────────────────────────────────┐
-│  ▶  0:45 → 0:48           📎(fill)  │  (저장됨 — 파란 fill)
-│     Movies coming out in 2026.      │
-│     💭 이 표현 좋네 [편집]          │  (저장 시에만 표시)
+│ ▶ 0:45 → 0:48 📎(fill) │ (저장됨 — 파란 fill)
+│ Movies coming out in 2026. │
+│ 💭 이 표현 좋네 [편집] │ (저장 시에만 표시)
 └─────────────────────────────────────┘
 ```
 
@@ -264,13 +264,13 @@ current.set({
 ```ts
 // stores/current.ts
 export interface CurrentState {
-  screen: 'idle' | 'processing' | 'ready' | 'burn_done' | 'error';
-  jobId: string | null;
-  job: JobDto | null;
-  progress: number;
-  stageMessage: string;
-  errorMessage: string | null;
-  initialTime?: number;   // ← 추가 (optional, 초 단위)
+ screen: 'idle' | 'processing' | 'ready' | 'burn_done' | 'error';
+ jobId: string | null;
+ job: JobDto | null;
+ progress: number;
+ stageMessage: string;
+ errorMessage: string | null;
+ initialTime?: number; // ← 추가 (optional, 초 단위)
 }
 ```
 
@@ -280,11 +280,11 @@ export interface CurrentState {
 let lastSeekTarget: number | null = null;
 
 $: if ($current.initialTime !== undefined
-        && $current.initialTime !== lastSeekTarget
-        && playerRef
-        && videoReady) {
-  playerRef.seekTo($current.initialTime);
-  lastSeekTarget = $current.initialTime;
+ && $current.initialTime !== lastSeekTarget
+ && playerRef
+ && videoReady) {
+ playerRef.seekTo($current.initialTime);
+ lastSeekTarget = $current.initialTime;
 }
 ```
 
@@ -302,8 +302,8 @@ import type { MemoDto } from '$lib/api/types';
 export const memos = writable<MemoDto[]>([]);
 
 export async function refreshMemos() {
-  const res = await api.listMemos();
-  memos.set(res.items);
+ const res = await api.listMemos();
+ memos.set(res.items);
 }
 ```
 
@@ -313,22 +313,22 @@ Sidebar가 탭 전환 시 / 마운트 시 `refreshMemos()`. 서버가 source of 
 
 ```
 backend/app/
-├── models/memo.py                ← 신규
-├── services/memo.py              ← 신규
-└── api/memo.py                   ← 신규
+├── models/memo.py ← 신규
+├── services/memo.py ← 신규
+└── api/memo.py ← 신규
 
 frontend/src/lib/
-├── api/memo.ts                   ← 신규
-├── stores/memos.ts               ← 신규
-├── ui/MemoCard.svelte            ← 신규
-└── ui/SegmentMemo.svelte         ← 신규
+├── api/memo.ts ← 신규
+├── stores/memos.ts ← 신규
+├── ui/MemoCard.svelte ← 신규
+└── ui/SegmentMemo.svelte ← 신규
 
 수정 대상:
-- backend/app/api/__init__.py     (신규 라우터 등록)
-- backend/app/main.py              (app.include_router)
-- backend/app/services/jobs.py     (delete_job 내 memo cascade)
-- frontend/src/lib/api/jobs.ts     (ApiError re-export 유지)
-- frontend/src/lib/api/types.ts    (MemoDto 추가, CurrentState.initialTime)
+- backend/app/api/__init__.py (신규 라우터 등록)
+- backend/app/main.py (app.include_router)
+- backend/app/services/jobs.py (delete_job 내 memo cascade)
+- frontend/src/lib/api/jobs.ts (ApiError re-export 유지)
+- frontend/src/lib/api/types.ts (MemoDto 추가, CurrentState.initialTime)
 - frontend/src/lib/stores/current.ts (initialTime)
 - frontend/src/lib/ui/Sidebar.svelte (탭)
 - frontend/src/lib/ui/SegmentList.svelte (SegmentMemo 삽입)

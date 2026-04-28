@@ -71,32 +71,32 @@ High 신뢰도 이슈 4건, Medium 6건. 전체 구조는 이미 견고 (SQLite 
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│ Phase 1: Git 정리                                          │
-│   feature/gensub → master 일반 merge (히스토리 보존)      │
-│   .worktrees/gensub-impl 제거                             │
-│   refactor/stability 브랜치 생성                          │
+│ Phase 1: Git 정리 │
+│ feature/gensub → master 일반 merge (히스토리 보존) │
+│ .worktrees/gensub-impl 제거 │
+│ refactor/stability 브랜치 생성 │
 ├────────────────────────────────────────────────────────────┤
-│ Phase 2: 문서 작성 (서로 독립)                            │
-│   docs/architecture.md   (신규, 현재 상태 기록)          │
-│   CLAUDE.md              (신규, 개발·에이전트 규약)      │
-│   README.md              (덮어쓰기, 프로젝트 소개)       │
-│   루트 스크린샷 정리 (2장 유지, 39장 삭제)               │
+│ Phase 2: 문서 작성 (서로 독립) │
+│ docs/architecture.md (신규, 현재 상태 기록) │
+│ CLAUDE.md (신규, 개발·에이전트 규약) │
+│ README.md (덮어쓰기, 프로젝트 소개) │
+│ 루트 스크린샷 정리 (2장 유지, 39장 삭제) │
 ├────────────────────────────────────────────────────────────┤
-│ Phase 3: 리팩토링 R1 → R7 (작은 것부터)                   │
-│   R1 regenerate 제거                                      │
-│   R5 assert → RuntimeError                                │
-│   R7 worker healthcheck                                   │
-│   R2 pin_job / trigger_burn 서비스 추출                   │
-│   R4 ttlDays 프론트↔백엔드 연결                           │
-│   R6 백업 서비스 분리 + worker 호출                       │
-│   R3 burn 취소 경로 (+ ffmpeg 프로세스 종료)              │
+│ Phase 3: 리팩토링 R1 → R7 (작은 것부터) │
+│ R1 regenerate 제거 │
+│ R5 assert → RuntimeError │
+│ R7 worker healthcheck │
+│ R2 pin_job / trigger_burn 서비스 추출 │
+│ R4 ttlDays 프론트↔백엔드 연결 │
+│ R6 백업 서비스 분리 + worker 호출 │
+│ R3 burn 취소 경로 (+ ffmpeg 프로세스 종료) │
 ├────────────────────────────────────────────────────────────┤
-│ Phase 4: 통합 검증                                         │
-│   pytest 전체 / docker compose build / 수동 smoke         │
+│ Phase 4: 통합 검증 │
+│ pytest 전체 / docker compose build / 수동 smoke │
 ├────────────────────────────────────────────────────────────┤
-│ Phase 5: 완료                                              │
-│   refactor/stability → master 머지                        │
-│   구 설계 스펙 상단에 "현재 상태는 architecture.md" 안내  │
+│ Phase 5: 완료 │
+│ refactor/stability → master 머지 │
+│ 구 설계 스펙 상단에 "현재 상태는 architecture.md" 안내 │
 └────────────────────────────────────────────────────────────┘
 ```
 
@@ -141,19 +141,19 @@ git checkout -b refactor/stability
 
 1. **한눈에 보기** — 한 단락 프로젝트 정의 + 기술 스택 표 + 데이터 흐름 ASCII 다이어그램
 2. **컴포넌트 지도** — 백엔드/프론트엔드 디렉토리별 책임
-   - `backend/app/api/` — REST/SSE 라우터. services만 호출.
-   - `backend/app/services/` — 도메인 로직. Session 소유.
-   - `backend/app/models/` — SQLModel 엔티티.
-   - `backend/app/core/` — settings, DB 엔진.
-   - `backend/worker/` — 폴링 루프, pipeline 오케스트레이션.
-   - `frontend/src/lib/api/` — HTTP/SSE 클라이언트.
-   - `frontend/src/lib/stores/` — current(상태머신) + history(localStorage 동기화).
-   - `frontend/src/lib/screens/` — 상태별 화면.
-   - `frontend/src/lib/ui/` — 재사용 컴포넌트.
+ - `backend/app/api/` — REST/SSE 라우터. services만 호출.
+ - `backend/app/services/` — 도메인 로직. Session 소유.
+ - `backend/app/models/` — SQLModel 엔티티.
+ - `backend/app/core/` — settings, DB 엔진.
+ - `backend/worker/` — 폴링 루프, pipeline 오케스트레이션.
+ - `frontend/src/lib/api/` — HTTP/SSE 클라이언트.
+ - `frontend/src/lib/stores/` — current(상태머신) + history(localStorage 동기화).
+ - `frontend/src/lib/screens/` — 상태별 화면.
+ - `frontend/src/lib/ui/` — 재사용 컴포넌트.
 3. **Job 상태머신 + 파이프라인**
-   - 상태 다이어그램 (pending → downloading → transcribing → ready → burning → done / failed)
-   - 각 상태 전이에서 일어나는 일 + 관련 파일 참조
-   - 취소 경로 (`cancel_requested` → `_check_cancel`)
+ - 상태 다이어그램 (pending → downloading → transcribing → ready → burning → done / failed)
+ - 각 상태 전이에서 일어나는 일 + 관련 파일 참조
+ - 취소 경로 (`cancel_requested` → `_check_cancel`)
 4. **기능 카탈로그** — 기능 × 관련 파일 표. 사용자 관점의 기능명 → 백엔드 엔드포인트, 프론트 컴포넌트.
 5. **데이터 모델 + API 요약** — Job/Segment 스키마 + 엔드포인트 일람 (상세는 코드 참조).
 6. **배포·운영** — Docker 구성, 볼륨(named volume `gensub-data`), healthcheck, DB 백업, TTL 정리, 좀비 복구.
@@ -165,39 +165,39 @@ git checkout -b refactor/stability
 
 ### 5.2 `CLAUDE.md` (신규, 루트, 예상 ~180줄)
 
-**역할**: Claude Code가 세션마다 자동으로 읽는 규약 파일. 사람·AI 공통 개발 룰.
+**역할**: 개발 에이전트가 세션마다 자동으로 읽는 규약 파일. 사람·AI 공통 개발 룰.
 
 **섹션 구성**:
 
 1. **프로젝트 한 단락 소개** — GenSub이 뭐고 스택은 뭔지.
 2. **코드 컨벤션**
-   - Python: Python 3.11+, 타입 힌트 필수(단, 테스트 제외), ruff 규칙(E/F/I/N/UP/B/SIM), 100자 라인 제한.
-   - Svelte/TS: `strict: true`, 컴포넌트 파일 300줄 초과 시 분리 검토, `<script lang="ts">` 기본.
+ - Python: Python 3.11+, 타입 힌트 필수(단, 테스트 제외), ruff 규칙(E/F/I/N/UP/B/SIM), 100자 라인 제한.
+ - Svelte/TS: `strict: true`, 컴포넌트 파일 300줄 초과 시 분리 검토, `<script lang="ts">` 기본.
 3. **아키텍처 규칙 (위반 시 레이어 경계 깨짐)**
-   - `api/` 라우터 안에서 `Session(engine)` 직접 열기 금지 → `services/` 함수 호출.
-   - Job 상태 전이는 반드시 `services/job_state.py` 경유.
-   - 파이프라인 단계 추가/수정은 `services/pipeline.py`에 국한, 워커 폴링 로직 건드리지 않는다.
-   - 설정은 `app/core/settings.py` `Settings`에만 추가. 하드코딩된 env 참조 금지.
+ - `api/` 라우터 안에서 `Session(engine)` 직접 열기 금지 → `services/` 함수 호출.
+ - Job 상태 전이는 반드시 `services/job_state.py` 경유.
+ - 파이프라인 단계 추가/수정은 `services/pipeline.py`에 국한, 워커 폴링 로직 건드리지 않는다.
+ - 설정은 `app/core/settings.py` `Settings`에만 추가. 하드코딩된 env 참조 금지.
 4. **테스트 규칙**
-   - `backend/tests/test_<module>.py` 네이밍.
-   - 새 서비스/엔드포인트 추가 시 테스트 동반. `pytest-asyncio` mode=auto.
-   - 리팩토링 시작 전 `uv run pytest` 그린 확인.
+ - `backend/tests/test_<module>.py` 네이밍.
+ - 새 서비스/엔드포인트 추가 시 테스트 동반. `pytest-asyncio` mode=auto.
+ - 리팩토링 시작 전 `uv run pytest` 그린 확인.
 5. **커밋/브랜치 규칙**
-   - 컨벤셔널 커밋(`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `test:`).
-   - 커밋 메시지는 **왜** 중심.
-   - 리팩토링은 별도 브랜치(`refactor/*`)에서.
-   - 머지 커밋 메시지에 요약 포함.
-6. **에이전트(Claude Code) 동작 규약**
-   - **모델 = Opus 4.7 고정**. `Agent` tool 호출 시 `model: "opus"` 명시.
-   - 모든 리팩토링 작업 전 `uv run pytest`로 기존 테스트 그린 확인.
-   - 경로는 항상 절대경로 사용.
-   - worktree가 필요한 경우 `superpowers:using-git-worktrees` 가이드 참조.
-   - 문서 경로 규칙:
-     - `docs/architecture.md` = **현재 상태** (코드와 동기화).
-     - `docs/superpowers/specs/YYYY-MM-DD-*.md` = **변경 제안** (시간 스냅샷, 보존).
-     - `docs/superpowers/plans/*/` = 실행 플랜 (체크리스트).
-     - `CLAUDE.md` = 규약 (이 파일).
-     - `README.md` = 외부 독자용 소개.
+ - 컨벤셔널 커밋(`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `test:`).
+ - 커밋 메시지는 **왜** 중심.
+ - 리팩토링은 별도 브랜치(`refactor/*`)에서.
+ - 머지 커밋 메시지에 요약 포함.
+6. **에이전트(에이전트 동작 규약**
+ - **모델 = 고정**. `Agent` tool 호출 시 `model: "opus"` 명시.
+ - 모든 리팩토링 작업 전 `uv run pytest`로 기존 테스트 그린 확인.
+ - 경로는 항상 절대경로 사용.
+ - worktree가 필요한 경우 `superpowers:using-git-worktrees` 가이드 참조.
+ - 문서 경로 규칙:
+ - `docs/architecture.md` = **현재 상태** (코드와 동기화).
+ - `docs/superpowers/specs/YYYY-MM-DD-*.md` = **변경 제안** (시간 스냅샷, 보존).
+ - `docs/superpowers/plans/*/` = 실행 플랜 (체크리스트).
+ - `CLAUDE.md` = 규약 (이 파일).
+ - `README.md` = 외부 독자용 소개.
 7. **위반 시 대처** — 본 파일과 충돌하는 요청을 받으면 먼저 파일의 업데이트를 제안한다.
 
 ### 5.3 `README.md` (덮어쓰기, 예상 ~130줄)
@@ -209,13 +209,13 @@ git checkout -b refactor/stability
 1. 타이틀 + 한 줄 소개.
 2. 스크린샷 (idle 화면) — `docs/images/gensub-idle-screen.png`.
 3. **핵심 기능** (불릿 6~8개):
-   - YouTube URL / 로컬 파일 업로드
-   - Whisper 기반 로컬 자막 생성 (언어 자동감지 + 수동지정, 한영 혼합 모드)
-   - 브라우저에서 세그먼트 단위 시청·편집
-   - SRT/VTT/TXT/JSON/MKV mux 다운로드
-   - ffmpeg burn-in 영상 내보내기 + 구간 클립
-   - 다크/라이트 모드, 한국어 UI
-   - 최근 작업 북마크 + TTL 자동 정리
+ - YouTube URL / 로컬 파일 업로드
+ - Whisper 기반 로컬 자막 생성 (언어 자동감지 + 수동지정, 한영 혼합 모드)
+ - 브라우저에서 세그먼트 단위 시청·편집
+ - SRT/VTT/TXT/JSON/MKV mux 다운로드
+ - ffmpeg burn-in 영상 내보내기 + 구간 클립
+ - 다크/라이트 모드, 한국어 UI
+ - 최근 작업 북마크 + TTL 자동 정리
 4. 스크린샷 (ready 화면) — `docs/images/gensub-final-ready.png`.
 5. **아키텍처 개요** — 3줄 요약 + 간단 다이어그램(api/worker/SQLite).
 6. **Quickstart**: `docker compose up -d`.
@@ -255,15 +255,15 @@ git checkout -b refactor/stability
 
 **변경**:
 - `backend/app/services/jobs.py`에 함수 신설:
-  - `pin_job(engine, job_id, pinned: bool) -> None`
-  - `request_burn(engine, job_id) -> None` — 상태를 `burning`으로, `progress=0.0`, `stage_message` 설정
+ - `pin_job(engine, job_id, pinned: bool) -> None`
+ - `request_burn(engine, job_id) -> None` — 상태를 `burning`으로, `progress=0.0`, `stage_message` 설정
 - `backend/app/api/jobs.py`:
-  - `pin_job` 엔드포인트 → `services.jobs.pin_job()` 호출만 수행
-  - `trigger_burn` 엔드포인트 → `services.jobs.request_burn()` 호출만 수행
-  - Session 직접 사용 제거
+ - `pin_job` 엔드포인트 → `services.jobs.pin_job()` 호출만 수행
+ - `trigger_burn` 엔드포인트 → `services.jobs.request_burn()` 호출만 수행
+ - Session 직접 사용 제거
 - 테스트 신규:
-  - `backend/tests/test_jobs_service_pin.py`
-  - `backend/tests/test_jobs_service_request_burn.py`
+ - `backend/tests/test_jobs_service_pin.py`
+ - `backend/tests/test_jobs_service_request_burn.py`
 
 **검증**: 기존 엔드포인트 통합 테스트도 그린 유지.
 
@@ -273,17 +273,17 @@ git checkout -b refactor/stability
 
 **변경**:
 - `backend/app/services/burn.py`:
-  - `burn_video()`에 `cancel_check: Callable[[], None] | None` 인자 추가
-  - **현재 구조 유지**: `subprocess.Popen`으로 기동한 뒤 `for raw in proc.stdout` 라인 루프로 진행률을 읽는 기존 구조를 그대로 사용.
-  - 루프 **매 라인마다** `cancel_check()` 호출. 취소 예외 발생 시 `proc.terminate()` → `proc.wait(timeout=5)` → 타임아웃이면 `proc.kill()` → 원래 예외 재발생.
-  - 부분 생성된 `output` 파일 정리는 호출부(`process_burn_job`)에서 담당.
+ - `burn_video()`에 `cancel_check: Callable[[], None] | None` 인자 추가
+ - **현재 구조 유지**: `subprocess.Popen`으로 기동한 뒤 `for raw in proc.stdout` 라인 루프로 진행률을 읽는 기존 구조를 그대로 사용.
+ - 루프 **매 라인마다** `cancel_check()` 호출. 취소 예외 발생 시 `proc.terminate()` → `proc.wait(timeout=5)` → 타임아웃이면 `proc.kill()` → 원래 예외 재발생.
+ - 부분 생성된 `output` 파일 정리는 호출부(`process_burn_job`)에서 담당.
 - `backend/app/services/pipeline.py`:
-  - `process_burn_job`에 `_check_cancel` 포인트 3군데 추가 (시작 전, 루프 안, 파일 정리 전)
-  - `JobCancelledError` 잡아서 `mark_failed("사용자가 작업을 취소했어요")` 처리 (기존 `process_job`과 동일 패턴)
-  - 실패 시 부분 생성된 `burned.mp4` 정리
+ - `process_burn_job`에 `_check_cancel` 포인트 3군데 추가 (시작 전, 루프 안, 파일 정리 전)
+ - `JobCancelledError` 잡아서 `mark_failed("사용자가 작업을 취소했어요")` 처리 (기존 `process_job`과 동일 패턴)
+ - 실패 시 부분 생성된 `burned.mp4` 정리
 - 테스트 신규: `backend/tests/test_pipeline_burn_cancel.py`
-  - 취소 플래그 세팅 후 `process_burn_job` 실행 → `failed` 상태 + 파일 없음 검증
-  - ffmpeg 종료 경로는 short fake ffmpeg로 대체하거나 mock
+ - 취소 플래그 세팅 후 `process_burn_job` 실행 → `failed` 상태 + 파일 없음 검증
+ - ffmpeg 종료 경로는 short fake ffmpeg로 대체하거나 mock
 
 **검증**: 기존 burn 테스트들 그린 유지.
 
@@ -295,14 +295,14 @@ git checkout -b refactor/stability
 
 **변경**:
 - `frontend/src/lib/api/jobs.ts` (또는 별도 `config.ts`):
-  - `fetchConfig()` — `GET /api/config` 호출, `job_ttl_hours` 포함 반환
+ - `fetchConfig()` — `GET /api/config` 호출, `job_ttl_hours` 포함 반환
 - `frontend/src/lib/ui/Sidebar.svelte`:
-  - `onMount`에서 `fetchConfig()` 호출해 `job_ttl_hours` 값 로드
-  - "보관 기간" 섹션을 **선택형 → 표시형**으로 변경: "현재 서버 설정: N시간 후 자동 삭제" (N은 서버 값)
-  - 기존 `localStorage` 키 `gensub.settings.ttlDays`는 **읽지 않고 쓰지 않음**. 남은 값은 다음 localStorage cleanup에서 자연 제거되도록 방치(명시적 삭제 코드는 넣지 않아 다른 기기·탭 영향 없음).
-  - 즐겨찾기(pin) 기능 안내 문구 유지: "북마크한 작업은 만료되지 않아요"
+ - `onMount`에서 `fetchConfig()` 호출해 `job_ttl_hours` 값 로드
+ - "보관 기간" 섹션을 **선택형 → 표시형**으로 변경: "현재 서버 설정: N시간 후 자동 삭제" (N은 서버 값)
+ - 기존 `localStorage` 키 `gensub.settings.ttlDays`는 **읽지 않고 쓰지 않음**. 남은 값은 다음 localStorage cleanup에서 자연 제거되도록 방치(명시적 삭제 코드는 넣지 않아 다른 기기·탭 영향 없음).
+ - 즐겨찾기(pin) 기능 안내 문구 유지: "북마크한 작업은 만료되지 않아요"
 - `backend/app/api/config.py`:
-  - 변경 없음. 현재 응답에 `job_ttl_hours`가 이미 포함돼 있음 (확인 완료).
+ - 변경 없음. 현재 응답에 `job_ttl_hours`가 이미 포함돼 있음 (확인 완료).
 
 **검증**: 프론트 빌드 + 백엔드 config 엔드포인트 응답 스냅샷 검증 테스트.
 
@@ -315,12 +315,12 @@ git checkout -b refactor/stability
 
 **변경**:
 - 신규: `backend/app/services/backup.py`
-  - `backup_database(settings: Settings) -> None` — 현재 `_backup_db` 로직 이관
-  - 최근 3개 유지 상수를 함수 기본값으로
+ - `backup_database(settings: Settings) -> None` — 현재 `_backup_db` 로직 이관
+ - 최근 3개 유지 상수를 함수 기본값으로
 - `backend/app/main.py`:
-  - inline `_backup_db` 제거, `services.backup.backup_database(settings)` 호출
+ - inline `_backup_db` 제거, `services.backup.backup_database(settings)` 호출
 - `backend/worker/main.py`:
-  - worker 기동 시에도 `backup_database(settings)` 호출
+ - worker 기동 시에도 `backup_database(settings)` 호출
 - 테스트 신규: `backend/tests/test_backup.py` — 최근 3개 유지 검증
 
 ### R7. worker healthcheck 추가 (XS)
@@ -329,22 +329,22 @@ git checkout -b refactor/stability
 
 ```dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ffmpeg \
-        mkvtoolnix \
-        libsndfile1 \
-        procps \              # 추가
-        ca-certificates \
-        curl \
-    && rm -rf /var/lib/apt/lists/*
+ ffmpeg \
+ mkvtoolnix \
+ libsndfile1 \
+ procps \ # 추가
+ ca-certificates \
+ curl \
+ && rm -rf /var/lib/apt/lists/*
 ```
 
 **변경 2 — `compose.yaml`** worker 서비스에 healthcheck 추가:
 ```yaml
 healthcheck:
-  test: ["CMD", "pgrep", "-f", "worker.main"]
-  interval: 30s
-  timeout: 5s
-  retries: 3
+ test: ["CMD", "pgrep", "-f", "worker.main"]
+ interval: 30s
+ timeout: 5s
+ retries: 3
 ```
 
 ---
@@ -366,10 +366,10 @@ healthcheck:
 1. `refactor/stability` → `master` 일반 머지 (Phase 1과 동일한 `--no-ff` 전략)
 2. 구 설계 스펙 `docs/superpowers/specs/2026-04-11-gensub-design.md` 최상단에 다음 헤더 추가:
 
-   ```markdown
-   > ℹ️ **이 문서는 2026-04-11 시점의 초기 설계 명세**입니다. 현재 구현된 아키텍처는
-   > [`docs/architecture.md`](../../architecture.md)를 참고하세요. 본 문서는 설계 의도 보존을 위해 유지됩니다.
-   ```
+ ```markdown
+ > ℹ️ **이 문서는 2026-04-11 시점의 초기 설계 명세**입니다. 현재 구현된 아키텍처는
+ > [`docs/architecture.md`](../../architecture.md)를 참고하세요. 본 문서는 설계 의도 보존을 위해 유지됩니다.
+ ```
 3. 본 스펙(`2026-04-18-…design.md`)도 "완료됨" 섹션을 하단에 추가하거나, 커밋 메시지로 대체.
 
 ---

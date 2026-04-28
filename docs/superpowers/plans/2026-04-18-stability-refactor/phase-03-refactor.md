@@ -99,8 +99,6 @@ refactor: remove unused regenerate endpoint and service
 - backend/tests/test_regenerate.py 삭제
 - backend/app/api/segments.py 라우트 제거
 - frontend/src/lib/api/jobs.ts, types.ts 관련 함수/타입 제거
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -128,15 +126,15 @@ Expected line 43: `assert proc.stdout is not None`.
 
 ```python
 # 변경 전:
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    assert proc.stdout is not None
-    total_us = total_duration_sec * 1_000_000
+ proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+ assert proc.stdout is not None
+ total_us = total_duration_sec * 1_000_000
 
 # 변경 후:
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    if proc.stdout is None:
-        raise RuntimeError("ffmpeg process failed to start (stdout is None)")
-    total_us = total_duration_sec * 1_000_000
+ proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+ if proc.stdout is None:
+ raise RuntimeError("ffmpeg process failed to start (stdout is None)")
+ total_us = total_duration_sec * 1_000_000
 ```
 
 - [ ] **Step 3: 테스트**
@@ -158,8 +156,6 @@ refactor(burn): replace assert with explicit RuntimeError
 
 python -O 실행 시 assert가 제거되어 None dereference가 가능해짐.
 명시적 RuntimeError로 교체해 프로덕션 안전성 확보.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -187,22 +183,22 @@ grep -n "apt-get install" Dockerfile
 ```dockerfile
 # 변경 전:
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ffmpeg \
-        mkvtoolnix \
-        libsndfile1 \
-        ca-certificates \
-        curl \
-    && rm -rf /var/lib/apt/lists/*
+ ffmpeg \
+ mkvtoolnix \
+ libsndfile1 \
+ ca-certificates \
+ curl \
+ && rm -rf /var/lib/apt/lists/*
 
 # 변경 후:
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ffmpeg \
-        mkvtoolnix \
-        libsndfile1 \
-        procps \
-        ca-certificates \
-        curl \
-    && rm -rf /var/lib/apt/lists/*
+ ffmpeg \
+ mkvtoolnix \
+ libsndfile1 \
+ procps \
+ ca-certificates \
+ curl \
+ && rm -rf /var/lib/apt/lists/*
 ```
 
 - [ ] **Step 3: compose.yaml 수정**
@@ -210,15 +206,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 `compose.yaml`의 `worker` 서비스에 다음 블록 추가 (`restart: unless-stopped` 바로 앞 또는 뒤):
 
 ```yaml
-  worker:
-    # ... 기존 설정 유지 ...
-    restart: unless-stopped
-    stop_grace_period: 30s
-    healthcheck:
-      test: ["CMD", "pgrep", "-f", "worker.main"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+ worker:
+ # ... 기존 설정 유지 ...
+ restart: unless-stopped
+ stop_grace_period: 30s
+ healthcheck:
+ test: ["CMD", "pgrep", "-f", "worker.main"]
+ interval: 30s
+ timeout: 5s
+ retries: 3
 ```
 
 - [ ] **Step 4: Docker 빌드 검증**
@@ -234,7 +230,7 @@ Expected: 빌드 성공. `procps` 설치 로그 확인.
 
 ```bash
 docker compose up -d worker
-sleep 35  # interval 30s 기다림
+sleep 35 # interval 30s 기다림
 docker inspect gensub-worker --format='{{.State.Health.Status}}'
 docker compose down
 ```
@@ -251,8 +247,6 @@ chore(docker): add worker healthcheck via pgrep
 worker가 crash-loop 상태여도 depends_on만으로는 감지 불가.
 pgrep -f worker.main 기반 헬스체크 추가. python:3.11-slim에
 pgrep이 없어 Dockerfile에 procps 패키지도 함께 추가.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -302,46 +296,46 @@ from app.services.jobs import pin_job
 
 @pytest.fixture
 def engine(tmp_path):
-    db_path = tmp_path / "jobs.db"
-    engine = create_db_engine(f"sqlite:///{db_path}")
-    init_db(engine)
-    return engine
+ db_path = tmp_path / "jobs.db"
+ engine = create_db_engine(f"sqlite:///{db_path}")
+ init_db(engine)
+ return engine
 
 
 @pytest.fixture
 def ready_job(engine):
-    job = Job(
-        id="j1",
-        source_url="https://example.com/v",
-        source_kind=SourceKind.url.value,
-        model_name="small",
-        status=JobStatus.ready,
-        expires_at=datetime.now(UTC) + timedelta(hours=24),
-    )
-    with Session(engine) as s:
-        s.add(job)
-        s.commit()
-    return job
+ job = Job(
+ id="j1",
+ source_url="https://example.com/v",
+ source_kind=SourceKind.url.value,
+ model_name="small",
+ status=JobStatus.ready,
+ expires_at=datetime.now(UTC) + timedelta(hours=24),
+ )
+ with Session(engine) as s:
+ s.add(job)
+ s.commit()
+ return job
 
 
 def test_pin_job_sets_pinned_true(engine, ready_job):
-    pin_job(engine, ready_job.id, True)
-    with Session(engine) as s:
-        got = s.get(Job, ready_job.id)
-        assert got is not None
-        assert got.pinned is True
+ pin_job(engine, ready_job.id, True)
+ with Session(engine) as s:
+ got = s.get(Job, ready_job.id)
+ assert got is not None
+ assert got.pinned is True
 
 
 def test_unpin_job_sets_pinned_false(engine, ready_job):
-    pin_job(engine, ready_job.id, True)
-    pin_job(engine, ready_job.id, False)
-    with Session(engine) as s:
-        assert s.get(Job, ready_job.id).pinned is False
+ pin_job(engine, ready_job.id, True)
+ pin_job(engine, ready_job.id, False)
+ with Session(engine) as s:
+ assert s.get(Job, ready_job.id).pinned is False
 
 
 def test_pin_job_missing_raises(engine):
-    with pytest.raises(LookupError):
-        pin_job(engine, "nonexistent", True)
+ with pytest.raises(LookupError):
+ pin_job(engine, "nonexistent", True)
 ```
 
 - [ ] **Step 4: 테스트 실행 → 실패 확인**
@@ -364,14 +358,14 @@ from app.models.job import Job
 
 
 def pin_job(engine: Engine, job_id: str, pinned: bool) -> None:
-    """pinned 상태를 토글. 없는 job이면 LookupError."""
-    with Session(engine) as s:
-        job = s.get(Job, job_id)
-        if job is None:
-            raise LookupError(job_id)
-        job.pinned = pinned
-        s.add(job)
-        s.commit()
+ """pinned 상태를 토글. 없는 job이면 LookupError."""
+ with Session(engine) as s:
+ job = s.get(Job, job_id)
+ if job is None:
+ raise LookupError(job_id)
+ job.pinned = pinned
+ s.add(job)
+ s.commit()
 ```
 
 - [ ] **Step 6: 테스트 통과 확인**
@@ -399,46 +393,46 @@ from app.services.jobs import request_burn
 
 @pytest.fixture
 def engine(tmp_path):
-    db_path = tmp_path / "jobs.db"
-    engine = create_db_engine(f"sqlite:///{db_path}")
-    init_db(engine)
-    return engine
+ db_path = tmp_path / "jobs.db"
+ engine = create_db_engine(f"sqlite:///{db_path}")
+ init_db(engine)
+ return engine
 
 
 def _make_job(engine, status: JobStatus) -> str:
-    job = Job(
-        id="j1",
-        source_url="https://example.com/v",
-        source_kind=SourceKind.url.value,
-        model_name="small",
-        status=status,
-        expires_at=datetime.now(UTC) + timedelta(hours=24),
-    )
-    with Session(engine) as s:
-        s.add(job)
-        s.commit()
-    return job.id
+ job = Job(
+ id="j1",
+ source_url="https://example.com/v",
+ source_kind=SourceKind.url.value,
+ model_name="small",
+ status=status,
+ expires_at=datetime.now(UTC) + timedelta(hours=24),
+ )
+ with Session(engine) as s:
+ s.add(job)
+ s.commit()
+ return job.id
 
 
 def test_request_burn_from_ready_transitions_to_burning(engine):
-    jid = _make_job(engine, JobStatus.ready)
-    request_burn(engine, jid)
-    with Session(engine) as s:
-        got = s.get(Job, jid)
-        assert got.status == JobStatus.burning
-        assert got.progress == 0.0
-        assert got.stage_message is not None
+ jid = _make_job(engine, JobStatus.ready)
+ request_burn(engine, jid)
+ with Session(engine) as s:
+ got = s.get(Job, jid)
+ assert got.status == JobStatus.burning
+ assert got.progress == 0.0
+ assert got.stage_message is not None
 
 
 def test_request_burn_from_non_ready_raises(engine):
-    jid = _make_job(engine, JobStatus.transcribing)
-    with pytest.raises(ValueError):
-        request_burn(engine, jid)
+ jid = _make_job(engine, JobStatus.transcribing)
+ with pytest.raises(ValueError):
+ request_burn(engine, jid)
 
 
 def test_request_burn_missing_raises(engine):
-    with pytest.raises(LookupError):
-        request_burn(engine, "nonexistent")
+ with pytest.raises(LookupError):
+ request_burn(engine, "nonexistent")
 ```
 
 - [ ] **Step 8: 테스트 실행 → 실패**
@@ -456,19 +450,19 @@ from app.models.job import JobStatus
 
 
 def request_burn(engine: Engine, job_id: str) -> None:
-    """ready 상태인 job을 burning으로 전이. pipeline에서 picker가 잡음."""
-    with Session(engine) as s:
-        job = s.get(Job, job_id)
-        if job is None:
-            raise LookupError(job_id)
-        if job.status != JobStatus.ready:
-            raise ValueError(f"cannot burn job in status={job.status}")
-        job.status = JobStatus.burning
-        job.progress = 0.0
-        job.stage_message = "자막을 영상에 입히고 있어요"
-        job.error_message = None
-        s.add(job)
-        s.commit()
+ """ready 상태인 job을 burning으로 전이. pipeline에서 picker가 잡음."""
+ with Session(engine) as s:
+ job = s.get(Job, job_id)
+ if job is None:
+ raise LookupError(job_id)
+ if job.status != JobStatus.ready:
+ raise ValueError(f"cannot burn job in status={job.status}")
+ job.status = JobStatus.burning
+ job.progress = 0.0
+ job.stage_message = "자막을 영상에 입히고 있어요"
+ job.error_message = None
+ s.add(job)
+ s.commit()
 ```
 
 - [ ] **Step 10: 테스트 통과**
@@ -484,44 +478,44 @@ Expected: 3 passed.
 `backend/app/api/jobs.py` 편집:
 
 1. 상단에 import 추가:
-   ```python
-   from app.services.jobs import pin_job as pin_job_service, request_burn
-   ```
+ ```python
+ from app.services.jobs import pin_job as pin_job_service, request_burn
+ ```
 2. 라우터 핸들러 교체:
 
 ```python
 # 변경 전 pin_job 핸들러 (Session 직접 사용):
 @router.post("/{job_id}/pin")
 def pin_job_endpoint(job_id: str, request: Request, body: dict) -> dict:
-    # ... Session(engine) 직접 사용 ...
+ # ... Session(engine) 직접 사용 ...
 
 # 변경 후:
 @router.post("/{job_id}/pin")
 def pin_job_endpoint(job_id: str, request: Request, body: dict) -> dict:
-    pinned = bool(body.get("pinned", True))
-    try:
-        pin_job_service(request.app.state.engine, job_id, pinned)
-    except LookupError as err:
-        raise HTTPException(status_code=404, detail="job not found") from err
-    return {"ok": True, "pinned": pinned}
+ pinned = bool(body.get("pinned", True))
+ try:
+ pin_job_service(request.app.state.engine, job_id, pinned)
+ except LookupError as err:
+ raise HTTPException(status_code=404, detail="job not found") from err
+ return {"ok": True, "pinned": pinned}
 ```
 
 ```python
 # 변경 전 trigger_burn 핸들러:
 @router.post("/{job_id}/burn")
 def trigger_burn(...):
-    # ... Session(engine) 직접 사용, status 필드 직접 수정 ...
+ # ... Session(engine) 직접 사용, status 필드 직접 수정 ...
 
 # 변경 후:
 @router.post("/{job_id}/burn")
 def trigger_burn(job_id: str, request: Request) -> dict:
-    try:
-        request_burn(request.app.state.engine, job_id)
-    except LookupError as err:
-        raise HTTPException(status_code=404, detail="job not found") from err
-    except ValueError as err:
-        raise HTTPException(status_code=409, detail=str(err)) from err
-    return {"ok": True}
+ try:
+ request_burn(request.app.state.engine, job_id)
+ except LookupError as err:
+ raise HTTPException(status_code=404, detail="job not found") from err
+ except ValueError as err:
+ raise HTTPException(status_code=409, detail=str(err)) from err
+ return {"ok": True}
 ```
 
 (주의: 기존 함수 시그니처·body 처리 방식은 실제 코드 읽어서 맞춰라. 위는 대표 형태.)
@@ -548,8 +542,6 @@ refactor(api): extract pin_job and request_burn into services layer
 추출, 라우터는 검증과 서비스 호출만 수행.
 
 테스트: 서비스 단위 테스트 2파일(6 케이스) 신규.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -579,18 +571,18 @@ grep -n "ttlDays\|gensub.settings" /Users/loki/GenSub/frontend/src/lib/ui/Sideba
 
 ```typescript
 export interface ServerConfig {
-  default_model: string;
-  available_models: string[];
-  max_video_minutes: number;
-  max_upload_mb: number;
-  job_ttl_hours: number;
-  has_openai_fallback: boolean;
+ default_model: string;
+ available_models: string[];
+ max_video_minutes: number;
+ max_upload_mb: number;
+ job_ttl_hours: number;
+ has_openai_fallback: boolean;
 }
 
 export async function fetchConfig(): Promise<ServerConfig> {
-  const res = await fetch('/api/config');
-  if (!res.ok) throw new Error(`config fetch failed: ${res.status}`);
-  return (await res.json()) as ServerConfig;
+ const res = await fetch('/api/config');
+ if (!res.ok) throw new Error(`config fetch failed: ${res.status}`);
+ return (await res.json()) as ServerConfig;
 }
 ```
 
@@ -599,33 +591,33 @@ export async function fetchConfig(): Promise<ServerConfig> {
 `frontend/src/lib/ui/Sidebar.svelte` 편집:
 
 1. `<script>` 상단에 import + 상태 추가:
-   ```typescript
-   import { fetchConfig } from '$lib/api/jobs';
-   let serverTtlHours: number | null = null;
-   ```
+ ```typescript
+ import { fetchConfig } from '$lib/api/jobs';
+ let serverTtlHours: number | null = null;
+ ```
 2. `onMount` 또는 동등한 초기화 지점에서:
-   ```typescript
-   onMount(async () => {
-     try {
-       const cfg = await fetchConfig();
-       serverTtlHours = cfg.job_ttl_hours;
-     } catch {
-       serverTtlHours = null;
-     }
-   });
-   ```
+ ```typescript
+ onMount(async () => {
+ try {
+ const cfg = await fetchConfig();
+ serverTtlHours = cfg.job_ttl_hours;
+ } catch {
+ serverTtlHours = null;
+ }
+ });
+ ```
 3. 기존 "보관 기간" 선택 UI 블록(현재 localStorage ttlDays 바인딩)을 다음으로 교체:
 
 ```svelte
 <!-- 기존 segmented control/select 삭제하고 표시형으로: -->
 <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark">
-  {#if serverTtlHours === null}
-    보관 기간 정보를 불러오는 중…
-  {:else}
-    작업은 <strong>{serverTtlHours}시간</strong> 후 자동 삭제됩니다.
-    <br />
-    북마크(📌)한 작업은 만료되지 않아요.
-  {/if}
+ {#if serverTtlHours === null}
+ 보관 기간 정보를 불러오는 중…
+ {:else}
+ 작업은 <strong>{serverTtlHours}시간</strong> 후 자동 삭제됩니다.
+ <br />
+ 북마크(📌)한 작업은 만료되지 않아요.
+ {/if}
 </div>
 ```
 
@@ -652,12 +644,12 @@ grep "job_ttl_hours" /Users/loki/GenSub/backend/tests/test_config_endpoint.py
 
 ```python
 def test_config_includes_job_ttl_hours(client):
-    resp = client.get("/api/config")
-    assert resp.status_code == 200
-    data = resp.json()
-    assert "job_ttl_hours" in data
-    assert isinstance(data["job_ttl_hours"], int)
-    assert data["job_ttl_hours"] > 0
+ resp = client.get("/api/config")
+ assert resp.status_code == 200
+ data = resp.json()
+ assert "job_ttl_hours" in data
+ assert isinstance(data["job_ttl_hours"], int)
+ assert data["job_ttl_hours"] > 0
 ```
 
 - [ ] **Step 6: 테스트 실행**
@@ -684,8 +676,6 @@ fix(frontend): sidebar TTL display reflects actual server setting
 수정: "보관 기간"을 선택형 → 표시형으로 변경. /api/config의
 job_ttl_hours를 읽어서 "N시간 후 자동 삭제" 안내. 환경 변수로만
 설정 가능하다는 실제 동작을 정확히 전달.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -722,57 +712,57 @@ from app.services.backup import backup_database
 
 
 def _make_settings(db_path: Path) -> Settings:
-    return Settings(
-        database_url=f"sqlite:///{db_path}",
-        media_dir=db_path.parent / "media",
-        model_cache_dir=db_path.parent / "models",
-    )
+ return Settings(
+ database_url=f"sqlite:///{db_path}",
+ media_dir=db_path.parent / "media",
+ model_cache_dir=db_path.parent / "models",
+ )
 
 
 def test_backup_creates_backup_file(tmp_path):
-    db_path = tmp_path / "jobs.db"
-    db_path.write_bytes(b"fake db content")
-    settings = _make_settings(db_path)
+ db_path = tmp_path / "jobs.db"
+ db_path.write_bytes(b"fake db content")
+ settings = _make_settings(db_path)
 
-    backup_database(settings)
+ backup_database(settings)
 
-    backup_dir = tmp_path / "backups"
-    assert backup_dir.exists()
-    backups = list(backup_dir.glob("jobs_*.db"))
-    assert len(backups) == 1
-    assert backups[0].read_bytes() == b"fake db content"
+ backup_dir = tmp_path / "backups"
+ assert backup_dir.exists()
+ backups = list(backup_dir.glob("jobs_*.db"))
+ assert len(backups) == 1
+ assert backups[0].read_bytes() == b"fake db content"
 
 
 def test_backup_keeps_only_recent_three(tmp_path):
-    db_path = tmp_path / "jobs.db"
-    db_path.write_bytes(b"x")
-    settings = _make_settings(db_path)
-    backup_dir = tmp_path / "backups"
-    backup_dir.mkdir()
+ db_path = tmp_path / "jobs.db"
+ db_path.write_bytes(b"x")
+ settings = _make_settings(db_path)
+ backup_dir = tmp_path / "backups"
+ backup_dir.mkdir()
 
-    # 오래된 백업 4개 미리 세팅 (서로 다른 timestamp)
-    old_times = [
-        datetime.now() - timedelta(hours=i) for i in [10, 8, 6, 4]
-    ]
-    for t in old_times:
-        stamp = t.strftime("%Y%m%d_%H%M%S")
-        (backup_dir / f"jobs_{stamp}.db").write_bytes(b"old")
+ # 오래된 백업 4개 미리 세팅 (서로 다른 timestamp)
+ old_times = [
+ datetime.now() - timedelta(hours=i) for i in [10, 8, 6, 4]
+ ]
+ for t in old_times:
+ stamp = t.strftime("%Y%m%d_%H%M%S")
+ (backup_dir / f"jobs_{stamp}.db").write_bytes(b"old")
 
-    backup_database(settings)
+ backup_database(settings)
 
-    backups = sorted(backup_dir.glob("jobs_*.db"))
-    assert len(backups) == 3
+ backups = sorted(backup_dir.glob("jobs_*.db"))
+ assert len(backups) == 3
 
 
 def test_backup_noop_when_db_missing(tmp_path):
-    db_path = tmp_path / "jobs.db"  # 존재하지 않음
-    settings = _make_settings(db_path)
+ db_path = tmp_path / "jobs.db" # 존재하지 않음
+ settings = _make_settings(db_path)
 
-    # 에러 없이 통과해야 함
-    backup_database(settings)
+ # 에러 없이 통과해야 함
+ backup_database(settings)
 
-    backup_dir = tmp_path / "backups"
-    assert not backup_dir.exists() or not list(backup_dir.glob("jobs_*.db"))
+ backup_dir = tmp_path / "backups"
+ assert not backup_dir.exists() or not list(backup_dir.glob("jobs_*.db"))
 ```
 
 - [ ] **Step 3: 테스트 실행 → 실패 확인**
@@ -800,27 +790,27 @@ KEEP_RECENT = 3
 
 
 def backup_database(settings: Settings, *, keep: int = KEEP_RECENT) -> Path | None:
-    """현재 DB 파일을 backups/ 디렉토리에 타임스탬프와 함께 복사.
+ """현재 DB 파일을 backups/ 디렉토리에 타임스탬프와 함께 복사.
 
-    DB 파일이 없으면 noop(None 반환). 백업 성공 시 백업 경로 반환.
-    오래된 백업은 최근 `keep`개만 남기고 삭제.
-    """
-    db_path = Path(settings.database_url.replace("sqlite:///", ""))
-    if not db_path.exists():
-        return None
+ DB 파일이 없으면 noop(None 반환). 백업 성공 시 백업 경로 반환.
+ 오래된 백업은 최근 `keep`개만 남기고 삭제.
+ """
+ db_path = Path(settings.database_url.replace("sqlite:///", ""))
+ if not db_path.exists():
+ return None
 
-    backup_dir = db_path.parent / "backups"
-    backup_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    target = backup_dir / f"jobs_{stamp}.db"
-    shutil.copy2(db_path, target)
+ backup_dir = db_path.parent / "backups"
+ backup_dir.mkdir(parents=True, exist_ok=True)
+ stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+ target = backup_dir / f"jobs_{stamp}.db"
+ shutil.copy2(db_path, target)
 
-    # 오래된 백업 정리 (파일명 기준 역순 = 최신 우선)
-    existing = sorted(backup_dir.glob("jobs_*.db"), reverse=True)
-    for old in existing[keep:]:
-        old.unlink(missing_ok=True)
+ # 오래된 백업 정리 (파일명 기준 역순 = 최신 우선)
+ existing = sorted(backup_dir.glob("jobs_*.db"), reverse=True)
+ for old in existing[keep:]:
+ old.unlink(missing_ok=True)
 
-    return target
+ return target
 ```
 
 - [ ] **Step 5: 테스트 통과 확인**
@@ -836,37 +826,37 @@ Expected: 3 passed.
 `backend/app/main.py` 편집:
 
 1. 파일 상단 import에 추가:
-   ```python
-   from app.services.backup import backup_database
-   ```
+ ```python
+ from app.services.backup import backup_database
+ ```
 2. inline `_backup_db` 함수 전체 삭제 (28~44라인 부근).
 3. lifespan 함수 내 호출 교체:
-   ```python
-   # 변경 전:
-   _backup_db(app.state.settings)
+ ```python
+ # 변경 전:
+ _backup_db(app.state.settings)
 
-   # 변경 후:
-   backup_database(app.state.settings)
-   ```
+ # 변경 후:
+ backup_database(app.state.settings)
+ ```
 
 - [ ] **Step 7: worker에서도 백업 호출**
 
 `backend/worker/main.py` 편집:
 
 1. import 추가:
-   ```python
-   from app.services.backup import backup_database
-   ```
+ ```python
+ from app.services.backup import backup_database
+ ```
 2. `run()` 함수에서 `sweep_zombie_jobs(engine)` 직전(또는 직후)에 추가:
-   ```python
-   settings = get_settings()
-   engine = create_db_engine(settings.database_url)
-   init_db(engine)
+ ```python
+ settings = get_settings()
+ engine = create_db_engine(settings.database_url)
+ init_db(engine)
 
-   backup_database(settings)  # 신규 추가
+ backup_database(settings) # 신규 추가
 
-   swept = sweep_zombie_jobs(engine)
-   ```
+ swept = sweep_zombie_jobs(engine)
+ ```
 
 - [ ] **Step 8: 전체 테스트**
 
@@ -891,8 +881,6 @@ refactor: move DB backup to services/backup.py and call from worker
 변경: services/backup.py의 backup_database()로 이관. api 시작 시와
 worker 시작 시 양쪽에서 호출. 최근 3개 유지 로직은 동일.
 테스트 3 케이스 신규(생성/로테이션/DB 없음 noop).
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -933,71 +921,71 @@ from app.services.pipeline import process_burn_job
 
 
 def _make_settings(tmp_path: Path) -> Settings:
-    return Settings(
-        database_url=f"sqlite:///{tmp_path / 'jobs.db'}",
-        media_dir=tmp_path / "media",
-        model_cache_dir=tmp_path / "models",
-    )
+ return Settings(
+ database_url=f"sqlite:///{tmp_path / 'jobs.db'}",
+ media_dir=tmp_path / "media",
+ model_cache_dir=tmp_path / "models",
+ )
 
 
 def _seed_burning_job(engine, settings: Settings, cancel: bool = False) -> str:
-    media = settings.media_dir / "j1"
-    media.mkdir(parents=True, exist_ok=True)
-    (media / "source.mp4").write_bytes(b"fake")
-    (media / "subtitles.srt").write_text("1\n00:00:00,000 --> 00:00:02,000\nhi\n", encoding="utf-8")
+ media = settings.media_dir / "j1"
+ media.mkdir(parents=True, exist_ok=True)
+ (media / "source.mp4").write_bytes(b"fake")
+ (media / "subtitles.srt").write_text("1\n00:00:00,000 --> 00:00:02,000\nhi\n", encoding="utf-8")
 
-    job = Job(
-        id="j1",
-        source_url="https://example.com/v",
-        source_kind=SourceKind.url.value,
-        model_name="small",
-        status=JobStatus.burning,
-        progress=0.0,
-        duration_sec=2.0,
-        expires_at=datetime.now(UTC) + timedelta(hours=24),
-        cancel_requested=cancel,
-    )
-    with Session(engine) as s:
-        s.add(job)
-        s.commit()
-    return job.id
+ job = Job(
+ id="j1",
+ source_url="https://example.com/v",
+ source_kind=SourceKind.url.value,
+ model_name="small",
+ status=JobStatus.burning,
+ progress=0.0,
+ duration_sec=2.0,
+ expires_at=datetime.now(UTC) + timedelta(hours=24),
+ cancel_requested=cancel,
+ )
+ with Session(engine) as s:
+ s.add(job)
+ s.commit()
+ return job.id
 
 
 def test_burn_respects_cancel_before_start(tmp_path):
-    """취소 플래그가 이미 True면 burn_video 실행 전에 failed로 종료."""
-    settings = _make_settings(tmp_path)
-    engine = create_db_engine(settings.database_url)
-    init_db(engine)
-    jid = _seed_burning_job(engine, settings, cancel=True)
+ """취소 플래그가 이미 True면 burn_video 실행 전에 failed로 종료."""
+ settings = _make_settings(tmp_path)
+ engine = create_db_engine(settings.database_url)
+ init_db(engine)
+ jid = _seed_burning_job(engine, settings, cancel=True)
 
-    # segments 기본 1개 세팅 필요 — 단순화: replace_all_segments 대신 DB에 직접
-    # (또는 load_segments가 빈 리스트여도 되면 생략)
+ # segments 기본 1개 세팅 필요 — 단순화: replace_all_segments 대신 DB에 직접
+ # (또는 load_segments가 빈 리스트여도 되면 생략)
 
-    process_burn_job(settings=settings, engine=engine, job_id=jid)
+ process_burn_job(settings=settings, engine=engine, job_id=jid)
 
-    with Session(engine) as s:
-        job = s.get(Job, jid)
-    assert job.status == JobStatus.failed
-    assert job.error_message is not None
-    # 부분 출력 없음
-    assert not (settings.media_dir / jid / "burned.mp4").exists()
+ with Session(engine) as s:
+ job = s.get(Job, jid)
+ assert job.status == JobStatus.failed
+ assert job.error_message is not None
+ # 부분 출력 없음
+ assert not (settings.media_dir / jid / "burned.mp4").exists()
 
 
 @pytest.mark.skipif(not shutil_has("ffmpeg"), reason="ffmpeg not available")
 def test_burn_cancel_mid_flight_terminates_ffmpeg(tmp_path, monkeypatch):
-    """
-    실제 ffmpeg를 쓰되, burn_video에 잠깐 대기하는 fake source를 넘겨
-    루프 도중 cancel_requested를 세팅하고 프로세스가 수 초 내 종료되는지 검증.
+ """
+ 실제 ffmpeg를 쓰되, burn_video에 잠깐 대기하는 fake source를 넘겨
+ 루프 도중 cancel_requested를 세팅하고 프로세스가 수 초 내 종료되는지 검증.
 
-    구현 난이도에 따라 이 테스트는 burn.py 단위로 쪼개거나 skip 가능.
-    """
-    # (옵션) — 상세 구현은 리팩토링 중 burn_video 시그니처 확정 후 작성
-    pytest.skip("implemented after burn_video signature stabilized")
+ 구현 난이도에 따라 이 테스트는 burn.py 단위로 쪼개거나 skip 가능.
+ """
+ # (옵션) — 상세 구현은 리팩토링 중 burn_video 시그니처 확정 후 작성
+ pytest.skip("implemented after burn_video signature stabilized")
 
 
 def shutil_has(name: str) -> bool:
-    import shutil as _s
-    return _s.which(name) is not None
+ import shutil as _s
+ return _s.which(name) is not None
 ```
 
 > 주의: 두 번째 테스트는 ffmpeg 실제 실행이 필요하므로 CI에서는 skip 가능. 첫 번째 테스트만으로도 파이프라인 레벨 취소 경로는 검증됨.
@@ -1022,78 +1010,78 @@ from pathlib import Path
 
 
 def build_burn_args(video: Path, ass: Path, output: Path) -> list[str]:
-    return [
-        "ffmpeg",
-        "-y",
-        "-i",
-        str(video),
-        "-vf",
-        f"ass={ass}",
-        "-c:a",
-        "copy",
-        "-c:v",
-        "libx264",
-        "-preset",
-        "medium",
-        "-crf",
-        "23",
-        "-progress",
-        "pipe:1",
-        "-nostats",
-        str(output),
-    ]
+ return [
+ "ffmpeg",
+ "-y",
+ "-i",
+ str(video),
+ "-vf",
+ f"ass={ass}",
+ "-c:a",
+ "copy",
+ "-c:v",
+ "libx264",
+ "-preset",
+ "medium",
+ "-crf",
+ "23",
+ "-progress",
+ "pipe:1",
+ "-nostats",
+ str(output),
+ ]
 
 
 _TIME_RE = re.compile(r"out_time_ms=(\d+)")
 
 
 def burn_video(
-    video: Path,
-    ass: Path,
-    output: Path,
-    total_duration_sec: float,
-    progress_callback: Callable[[float], None] | None = None,
-    cancel_check: Callable[[], None] | None = None,
+ video: Path,
+ ass: Path,
+ output: Path,
+ total_duration_sec: float,
+ progress_callback: Callable[[float], None] | None = None,
+ cancel_check: Callable[[], None] | None = None,
 ) -> Path:
-    """ffmpeg burn-in. cancel_check가 예외를 raise하면 ffmpeg 종료 후 예외 재발생."""
-    output.parent.mkdir(parents=True, exist_ok=True)
-    args = build_burn_args(video, ass, output)
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    if proc.stdout is None:
-        raise RuntimeError("ffmpeg process failed to start (stdout is None)")
+ """ffmpeg burn-in. cancel_check가 예외를 raise하면 ffmpeg 종료 후 예외 재발생."""
+ output.parent.mkdir(parents=True, exist_ok=True)
+ args = build_burn_args(video, ass, output)
+ proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+ if proc.stdout is None:
+ raise RuntimeError("ffmpeg process failed to start (stdout is None)")
 
-    total_us = total_duration_sec * 1_000_000
-    cancelled_exc: BaseException | None = None
+ total_us = total_duration_sec * 1_000_000
+ cancelled_exc: BaseException | None = None
 
-    try:
-        for raw in proc.stdout:
-            if cancel_check is not None:
-                try:
-                    cancel_check()
-                except BaseException as exc:  # JobCancelledError 등
-                    cancelled_exc = exc
-                    break
-            m = _TIME_RE.search(raw)
-            if m and total_us > 0 and progress_callback:
-                processed = int(m.group(1))
-                progress_callback(min(1.0, processed / total_us))
-    finally:
-        if cancelled_exc is not None:
-            proc.terminate()
-            try:
-                proc.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                proc.kill()
-                proc.wait()
+ try:
+ for raw in proc.stdout:
+ if cancel_check is not None:
+ try:
+ cancel_check()
+ except BaseException as exc: # JobCancelledError 등
+ cancelled_exc = exc
+ break
+ m = _TIME_RE.search(raw)
+ if m and total_us > 0 and progress_callback:
+ processed = int(m.group(1))
+ progress_callback(min(1.0, processed / total_us))
+ finally:
+ if cancelled_exc is not None:
+ proc.terminate()
+ try:
+ proc.wait(timeout=5)
+ except subprocess.TimeoutExpired:
+ proc.kill()
+ proc.wait()
 
-    if cancelled_exc is not None:
-        raise cancelled_exc
+ if cancelled_exc is not None:
+ raise cancelled_exc
 
-    rc = proc.wait()
-    if rc != 0:
-        err = proc.stderr.read() if proc.stderr else ""
-        raise RuntimeError(f"burn failed: {err[:500]}")
-    return output
+ rc = proc.wait()
+ if rc != 0:
+ err = proc.stderr.read() if proc.stderr else ""
+ raise RuntimeError(f"burn failed: {err[:500]}")
+ return output
 ```
 
 - [ ] **Step 5: `services/pipeline.py`의 `process_burn_job` 수정**
@@ -1102,61 +1090,61 @@ def burn_video(
 
 ```python
 def process_burn_job(
-    settings: Settings,
-    engine: Engine,
-    job_id: str,
-    style: BurnStyle | None = None,
+ settings: Settings,
+ engine: Engine,
+ job_id: str,
+ style: BurnStyle | None = None,
 ) -> None:
-    media_dir = settings.media_dir / job_id
+ media_dir = settings.media_dir / job_id
 
-    def _cancel() -> None:
-        _check_cancel(engine, job_id)
+ def _cancel() -> None:
+ _check_cancel(engine, job_id)
 
-    try:
-        _cancel()  # 시작 전 체크
+ try:
+ _cancel() # 시작 전 체크
 
-        with Session(engine) as s:
-            job = s.get(Job, job_id)
-            if job is None:
-                return
-            duration = job.duration_sec or 1.0
+ with Session(engine) as s:
+ job = s.get(Job, job_id)
+ if job is None:
+ return
+ duration = job.duration_sec or 1.0
 
-        source_candidates = list(media_dir.glob("source.*"))
-        if not source_candidates:
-            raise RuntimeError("source video missing")
-        source = source_candidates[0]
+ source_candidates = list(media_dir.glob("source.*"))
+ if not source_candidates:
+ raise RuntimeError("source video missing")
+ source = source_candidates[0]
 
-        segments = load_segments(engine, job_id)
-        ass_path = media_dir / "subtitles.ass"
-        ass_path.write_text(
-            srt_segments_to_ass(segments, style or BurnStyle()),
-            encoding="utf-8",
-        )
+ segments = load_segments(engine, job_id)
+ ass_path = media_dir / "subtitles.ass"
+ ass_path.write_text(
+ srt_segments_to_ass(segments, style or BurnStyle()),
+ encoding="utf-8",
+ )
 
-        job_state.update_progress(engine, job_id, 0.0, "자막을 영상에 입히고 있어요")
+ job_state.update_progress(engine, job_id, 0.0, "자막을 영상에 입히고 있어요")
 
-        def burn_progress(pct: float) -> None:
-            job_state.update_progress(engine, job_id, pct)
+ def burn_progress(pct: float) -> None:
+ job_state.update_progress(engine, job_id, pct)
 
-        output = media_dir / "burned.mp4"
-        burn_video(
-            video=source,
-            ass=ass_path,
-            output=output,
-            total_duration_sec=duration,
-            progress_callback=burn_progress,
-            cancel_check=_cancel,
-        )
-        _cancel()  # 완료 직전 최종 체크
-        job_state.mark_done(engine, job_id)
-    except JobCancelledError:
-        # 부분 생성된 burned.mp4 정리
-        partial = media_dir / "burned.mp4"
-        if partial.exists():
-            partial.unlink(missing_ok=True)
-        job_state.mark_failed(engine, job_id, "사용자가 작업을 취소했어요")
-    except Exception as exc:
-        job_state.mark_failed(engine, job_id, str(exc))
+ output = media_dir / "burned.mp4"
+ burn_video(
+ video=source,
+ ass=ass_path,
+ output=output,
+ total_duration_sec=duration,
+ progress_callback=burn_progress,
+ cancel_check=_cancel,
+ )
+ _cancel() # 완료 직전 최종 체크
+ job_state.mark_done(engine, job_id)
+ except JobCancelledError:
+ # 부분 생성된 burned.mp4 정리
+ partial = media_dir / "burned.mp4"
+ if partial.exists():
+ partial.unlink(missing_ok=True)
+ job_state.mark_failed(engine, job_id, "사용자가 작업을 취소했어요")
+ except Exception as exc:
+ job_state.mark_failed(engine, job_id, str(exc))
 ```
 
 - [ ] **Step 6: 테스트 재실행**
@@ -1190,14 +1178,12 @@ fix(pipeline): add cancel support to burn job
 
 수정:
 - burn_video()에 cancel_check 콜백 추가. 진행률 루프 매 라인마다
-  호출. 예외 발생 시 proc.terminate() → 5초 대기 → kill.
+ 호출. 예외 발생 시 proc.terminate() → 5초 대기 → kill.
 - process_burn_job 시작 전/완료 직전 _check_cancel. JobCancelledError
-  catch 시 부분 burned.mp4 정리 + mark_failed("사용자가 ...").
+ catch 시 부분 burned.mp4 정리 + mark_failed("사용자가 ...").
 
 테스트: 사전 취소 플래그 시 실행 없이 failed 되는지 검증.
 실행 중 취소는 ffmpeg 실 바이너리 의존이라 skip 처리.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```

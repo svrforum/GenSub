@@ -18,61 +18,61 @@ Write `frontend/src/lib/screens/ReadyScreen.svelte`:
 
 ```svelte
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { api } from '$lib/api/jobs';
-  import type { JobDto, SegmentDto } from '$lib/api/types';
+ import { onMount } from 'svelte';
+ import { api } from '$lib/api/jobs';
+ import type { JobDto, SegmentDto } from '$lib/api/types';
 
-  export let jobId: string;
+ export let jobId: string;
 
-  let job: JobDto | null = null;
-  let segments: SegmentDto[] = [];
-  let loading = true;
-  let errorText: string | null = null;
+ let job: JobDto | null = null;
+ let segments: SegmentDto[] = [];
+ let loading = true;
+ let errorText: string | null = null;
 
-  onMount(async () => {
-    try {
-      [job, segments] = await Promise.all([api.getJob(jobId), api.segments(jobId)]);
-    } catch (e) {
-      errorText = e instanceof Error ? e.message : '불러올 수 없어요';
-    } finally {
-      loading = false;
-    }
-  });
+ onMount(async () => {
+ try {
+ [job, segments] = await Promise.all([api.getJob(jobId), api.segments(jobId)]);
+ } catch (e) {
+ errorText = e instanceof Error ? e.message : '불러올 수 없어요';
+ } finally {
+ loading = false;
+ }
+ });
 </script>
 
 <div class="min-h-screen px-6 py-8 max-w-7xl mx-auto">
-  {#if loading}
-    <div class="text-center text-body">불러오고 있어요...</div>
-  {:else if errorText || !job}
-    <div class="text-center text-danger">{errorText ?? '데이터 없음'}</div>
-  {:else}
-    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-8">
-      <div class="flex flex-col gap-4">
-        <div class="card overflow-hidden aspect-video">
-          <!-- 플레이어는 Task 12.2에서 삽입 -->
-          <div class="w-full h-full bg-black" />
-        </div>
-        <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark">
-          {job.duration_sec?.toFixed(0) ?? '?'}초 · {job.language ?? '?'} · {job.model_name} · {segments.length}개 세그먼트
-        </div>
-      </div>
+ {#if loading}
+ <div class="text-center text-body">불러오고 있어요...</div>
+ {:else if errorText || !job}
+ <div class="text-center text-danger">{errorText ?? '데이터 없음'}</div>
+ {:else}
+ <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-8">
+ <div class="flex flex-col gap-4">
+ <div class="card overflow-hidden aspect-video">
+ <!-- 플레이어는 Task 12.2에서 삽입 -->
+ <div class="w-full h-full bg-black" />
+ </div>
+ <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark">
+ {job.duration_sec?.toFixed(0) ?? '?'}초 · {job.language ?? '?'} · {job.model_name} · {segments.length}개 세그먼트
+ </div>
+ </div>
 
-      <aside class="card p-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
-        <div class="text-title mb-4">자막</div>
-        <!-- 세그먼트 리스트는 Task 12.3에서 삽입 -->
-        <div class="space-y-2">
-          {#each segments as seg}
-            <div class="p-3 rounded-input">
-              <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark mb-1">
-                {seg.start.toFixed(2)} → {seg.end.toFixed(2)}
-              </div>
-              <div class="text-body">{seg.text}</div>
-            </div>
-          {/each}
-        </div>
-      </aside>
-    </div>
-  {/if}
+ <aside class="card p-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
+ <div class="text-title mb-4">자막</div>
+ <!-- 세그먼트 리스트는 Task 12.3에서 삽입 -->
+ <div class="space-y-2">
+ {#each segments as seg}
+ <div class="p-3 rounded-input">
+ <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark mb-1">
+ {seg.start.toFixed(2)} → {seg.end.toFixed(2)}
+ </div>
+ <div class="text-body">{seg.text}</div>
+ </div>
+ {/each}
+ </div>
+ </aside>
+ </div>
+ {/if}
 </div>
 ```
 
@@ -84,29 +84,29 @@ Overwrite `frontend/src/routes/+page.svelte`:
 
 ```svelte
 <script lang="ts">
-  import { current } from '$lib/stores/current';
-  import IdleScreen from '$lib/screens/IdleScreen.svelte';
-  import ProcessingScreen from '$lib/screens/ProcessingScreen.svelte';
-  import ReadyScreen from '$lib/screens/ReadyScreen.svelte';
+ import { current } from '$lib/stores/current';
+ import IdleScreen from '$lib/screens/IdleScreen.svelte';
+ import ProcessingScreen from '$lib/screens/ProcessingScreen.svelte';
+ import ReadyScreen from '$lib/screens/ReadyScreen.svelte';
 
-  $: jobId = typeof window !== 'undefined' ? ((window as any).__gensubCurrentJobId as string | undefined) : undefined;
+ $: jobId = typeof window !== 'undefined' ? ((window as any).__gensubCurrentJobId as string | undefined) : undefined;
 </script>
 
 {#if $current.screen === 'idle'}
-  <IdleScreen />
+ <IdleScreen />
 {:else if $current.screen === 'processing' && jobId}
-  <ProcessingScreen {jobId} />
+ <ProcessingScreen {jobId} />
 {:else if $current.screen === 'ready' && jobId}
-  <ReadyScreen {jobId} />
+ <ReadyScreen {jobId} />
 {:else if $current.screen === 'error'}
-  <div class="min-h-screen flex items-center justify-center">
-    <div class="text-center">
-      <div class="text-title text-danger mb-2">문제가 생겼어요</div>
-      <div class="text-body text-text-secondary-light dark:text-text-secondary-dark">
-        {$current.errorMessage ?? '알 수 없는 오류'}
-      </div>
-    </div>
-  </div>
+ <div class="min-h-screen flex items-center justify-center">
+ <div class="text-center">
+ <div class="text-title text-danger mb-2">문제가 생겼어요</div>
+ <div class="text-body text-text-secondary-light dark:text-text-secondary-dark">
+ {$current.errorMessage ?? '알 수 없는 오류'}
+ </div>
+ </div>
+ </div>
 {/if}
 ```
 
@@ -137,40 +137,40 @@ Write `frontend/src/lib/ui/VideoPlayer.svelte`:
 
 ```svelte
 <script lang="ts">
-  export let src: string;
-  export let vttSrc: string;
-  export let currentTime = 0;
+ export let src: string;
+ export let vttSrc: string;
+ export let currentTime = 0;
 
-  let videoEl: HTMLVideoElement;
+ let videoEl: HTMLVideoElement;
 
-  export function seekTo(t: number) {
-    if (videoEl) {
-      videoEl.currentTime = t;
-      videoEl.play().catch(() => {});
-    }
-  }
+ export function seekTo(t: number) {
+ if (videoEl) {
+ videoEl.currentTime = t;
+ videoEl.play().catch(() => {});
+ }
+ }
 
-  export function togglePlay() {
-    if (!videoEl) return;
-    if (videoEl.paused) videoEl.play();
-    else videoEl.pause();
-  }
+ export function togglePlay() {
+ if (!videoEl) return;
+ if (videoEl.paused) videoEl.play();
+ else videoEl.pause();
+ }
 
-  function onTimeUpdate() {
-    currentTime = videoEl?.currentTime ?? 0;
-  }
+ function onTimeUpdate() {
+ currentTime = videoEl?.currentTime ?? 0;
+ }
 </script>
 
 <video
-  bind:this={videoEl}
-  on:timeupdate={onTimeUpdate}
-  class="w-full h-full bg-black"
-  controls
-  preload="metadata"
-  crossorigin="anonymous"
+ bind:this={videoEl}
+ on:timeupdate={onTimeUpdate}
+ class="w-full h-full bg-black"
+ controls
+ preload="metadata"
+ crossorigin="anonymous"
 >
-  <source {src} />
-  <track default kind="subtitles" srclang="und" label="자막" src={vttSrc} />
+ <source {src} />
+ <track default kind="subtitles" srclang="und" label="자막" src={vttSrc} />
 </video>
 ```
 
@@ -185,10 +185,10 @@ Modify `frontend/src/lib/screens/ReadyScreen.svelte`:
 
 ```svelte
 <VideoPlayer
-  bind:this={playerRef}
-  bind:currentTime
-  src={api.videoUrl(jobId)}
-  vttSrc={api.vttUrl(jobId)}
+ bind:this={playerRef}
+ bind:currentTime
+ src={api.videoUrl(jobId)}
+ vttSrc={api.vttUrl(jobId)}
 />
 ```
 
@@ -219,54 +219,54 @@ Write `frontend/src/lib/ui/SegmentList.svelte`:
 
 ```svelte
 <script lang="ts">
-  import { tick } from 'svelte';
-  import type { SegmentDto } from '$lib/api/types';
+ import { tick } from 'svelte';
+ import type { SegmentDto } from '$lib/api/types';
 
-  export let segments: SegmentDto[] = [];
-  export let currentTime = 0;
-  export let onJump: (t: number) => void = () => {};
+ export let segments: SegmentDto[] = [];
+ export let currentTime = 0;
+ export let onJump: (t: number) => void = () => {};
 
-  let activeIdx = -1;
-  let containerEl: HTMLDivElement;
+ let activeIdx = -1;
+ let containerEl: HTMLDivElement;
 
-  $: {
-    const i = segments.findIndex((s) => currentTime >= s.start && currentTime < s.end);
-    if (i !== activeIdx) {
-      activeIdx = i;
-      tick().then(() => {
-        const el = containerEl?.querySelector(`[data-idx="${i}"]`) as HTMLElement | null;
-        el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      });
-    }
-  }
+ $: {
+ const i = segments.findIndex((s) => currentTime >= s.start && currentTime < s.end);
+ if (i !== activeIdx) {
+ activeIdx = i;
+ tick().then(() => {
+ const el = containerEl?.querySelector(`[data-idx="${i}"]`) as HTMLElement | null;
+ el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+ });
+ }
+ }
 
-  function isLowConfidence(seg: SegmentDto): boolean {
-    if (seg.avg_logprob == null) return false;
-    return seg.avg_logprob < -1.0;
-  }
+ function isLowConfidence(seg: SegmentDto): boolean {
+ if (seg.avg_logprob == null) return false;
+ return seg.avg_logprob < -1.0;
+ }
 </script>
 
 <div bind:this={containerEl} class="space-y-2">
-  {#each segments as seg, i (seg.idx)}
-    <button
-      type="button"
-      data-idx={i}
-      on:click={() => onJump(seg.start)}
-      class="w-full text-left p-3 rounded-input transition-all
-             {activeIdx === i
-               ? 'bg-brand/10 border-l-4 border-brand scale-[1.02]'
-               : 'hover:bg-divider-light dark:hover:bg-surface-dark-elevated'}
-             {isLowConfidence(seg) ? 'bg-warning/10' : ''}"
-    >
-      <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark mb-1 flex justify-between">
-        <span>{seg.start.toFixed(2)} → {seg.end.toFixed(2)}</span>
-        {#if seg.edited}
-          <span class="text-brand">편집됨</span>
-        {/if}
-      </div>
-      <div class="text-body">{seg.text}</div>
-    </button>
-  {/each}
+ {#each segments as seg, i (seg.idx)}
+ <button
+ type="button"
+ data-idx={i}
+ on:click={() => onJump(seg.start)}
+ class="w-full text-left p-3 rounded-input transition-all
+ {activeIdx === i
+ ? 'bg-brand/10 border-l-4 border-brand scale-[1.02]'
+ : 'hover:bg-divider-light dark:hover:bg-surface-dark-elevated'}
+ {isLowConfidence(seg) ? 'bg-warning/10' : ''}"
+ >
+ <div class="text-caption text-text-secondary-light dark:text-text-secondary-dark mb-1 flex justify-between">
+ <span>{seg.start.toFixed(2)} → {seg.end.toFixed(2)}</span>
+ {#if seg.edited}
+ <span class="text-brand">편집됨</span>
+ {/if}
+ </div>
+ <div class="text-body">{seg.text}</div>
+ </button>
+ {/each}
 </div>
 ```
 
@@ -279,9 +279,9 @@ Modify `frontend/src/lib/screens/ReadyScreen.svelte`:
 
 ```svelte
 <SegmentList
-  {segments}
-  bind:currentTime
-  onJump={(t) => playerRef?.seekTo(t)}
+ {segments}
+ bind:currentTime
+ onJump={(t) => playerRef?.seekTo(t)}
 />
 ```
 
@@ -312,51 +312,51 @@ Write `frontend/src/lib/ui/EditableSegment.svelte`:
 
 ```svelte
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+ import { createEventDispatcher } from 'svelte';
 
-  export let value: string;
-  export let editing = false;
+ export let value: string;
+ export let editing = false;
 
-  let inputEl: HTMLSpanElement;
-  const dispatch = createEventDispatcher<{ save: string; cancel: void }>();
+ let inputEl: HTMLSpanElement;
+ const dispatch = createEventDispatcher<{ save: string; cancel: void }>();
 
-  $: if (editing && inputEl) {
-    setTimeout(() => {
-      inputEl.focus();
-      const range = document.createRange();
-      range.selectNodeContents(inputEl);
-      const sel = window.getSelection();
-      sel?.removeAllRanges();
-      sel?.addRange(range);
-    }, 0);
-  }
+ $: if (editing && inputEl) {
+ setTimeout(() => {
+ inputEl.focus();
+ const range = document.createRange();
+ range.selectNodeContents(inputEl);
+ const sel = window.getSelection();
+ sel?.removeAllRanges();
+ sel?.addRange(range);
+ }, 0);
+ }
 
-  function commit() {
-    const text = inputEl?.innerText?.trim() ?? value;
-    dispatch('save', text);
-  }
+ function commit() {
+ const text = inputEl?.innerText?.trim() ?? value;
+ dispatch('save', text);
+ }
 
-  function onKey(e: KeyboardEvent) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      commit();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      dispatch('cancel');
-    }
-  }
+ function onKey(e: KeyboardEvent) {
+ if (e.key === 'Enter') {
+ e.preventDefault();
+ commit();
+ } else if (e.key === 'Escape') {
+ e.preventDefault();
+ dispatch('cancel');
+ }
+ }
 </script>
 
 {#if editing}
-  <span
-    bind:this={inputEl}
-    contenteditable="true"
-    class="outline-none ring-2 ring-brand rounded px-1"
-    on:keydown={onKey}
-    on:blur={commit}
-  >{value}</span>
+ <span
+ bind:this={inputEl}
+ contenteditable="true"
+ class="outline-none ring-2 ring-brand rounded px-1"
+ on:keydown={onKey}
+ on:blur={commit}
+ >{value}</span>
 {:else}
-  <span>{value}</span>
+ <span>{value}</span>
 {/if}
 ```
 
@@ -372,23 +372,23 @@ Modify `frontend/src/lib/ui/SegmentList.svelte`:
 
 ```svelte
 {#if editingIdx === i}
-  <EditableSegment
-    value={seg.text}
-    editing={true}
-    on:save={async (e) => {
-      editingIdx = null;
-      try {
-        await api.patchSegment(jobId, seg.idx, { text: e.detail });
-        segments[i] = { ...seg, text: e.detail, edited: true };
-      } catch {}
-    }}
-    on:cancel={() => (editingIdx = null)}
-  />
+ <EditableSegment
+ value={seg.text}
+ editing={true}
+ on:save={async (e) => {
+ editingIdx = null;
+ try {
+ await api.patchSegment(jobId, seg.idx, { text: e.detail });
+ segments[i] = { ...seg, text: e.detail, edited: true };
+ } catch {}
+ }}
+ on:cancel={() => (editingIdx = null)}
+ />
 {:else}
-  <span
-    class="text-body cursor-text"
-    on:dblclick|stopPropagation={() => (editingIdx = i)}
-  >{seg.text}</span>
+ <span
+ class="text-body cursor-text"
+ on:dblclick|stopPropagation={() => (editingIdx = i)}
+ >{seg.text}</span>
 {/if}
 ```
 
@@ -398,42 +398,42 @@ Modify `frontend/src/lib/ui/SegmentList.svelte`:
 
 ```svelte
 <div
-  data-idx={i}
-  class="w-full text-left p-3 rounded-input transition-all
-         {activeIdx === i
-           ? 'bg-brand/10 border-l-4 border-brand scale-[1.02]'
-           : 'hover:bg-divider-light dark:hover:bg-surface-dark-elevated'}
-         {isLowConfidence(seg) ? 'bg-warning/10' : ''}"
+ data-idx={i}
+ class="w-full text-left p-3 rounded-input transition-all
+ {activeIdx === i
+ ? 'bg-brand/10 border-l-4 border-brand scale-[1.02]'
+ : 'hover:bg-divider-light dark:hover:bg-surface-dark-elevated'}
+ {isLowConfidence(seg) ? 'bg-warning/10' : ''}"
 >
-  <button
-    type="button"
-    on:click={() => onJump(seg.start)}
-    class="w-full text-left text-caption text-text-secondary-light dark:text-text-secondary-dark mb-1 flex justify-between"
-  >
-    <span>{seg.start.toFixed(2)} → {seg.end.toFixed(2)}</span>
-    {#if seg.edited}
-      <span class="text-brand">편집됨</span>
-    {/if}
-  </button>
-  {#if editingIdx === i}
-    <EditableSegment
-      value={seg.text}
-      editing={true}
-      on:save={async (e) => {
-        editingIdx = null;
-        try {
-          await api.patchSegment(jobId, seg.idx, { text: e.detail });
-          segments[i] = { ...seg, text: e.detail, edited: true };
-        } catch {}
-      }}
-      on:cancel={() => (editingIdx = null)}
-    />
-  {:else}
-    <span
-      class="text-body cursor-text block"
-      on:dblclick|stopPropagation={() => (editingIdx = i)}
-    >{seg.text}</span>
-  {/if}
+ <button
+ type="button"
+ on:click={() => onJump(seg.start)}
+ class="w-full text-left text-caption text-text-secondary-light dark:text-text-secondary-dark mb-1 flex justify-between"
+ >
+ <span>{seg.start.toFixed(2)} → {seg.end.toFixed(2)}</span>
+ {#if seg.edited}
+ <span class="text-brand">편집됨</span>
+ {/if}
+ </button>
+ {#if editingIdx === i}
+ <EditableSegment
+ value={seg.text}
+ editing={true}
+ on:save={async (e) => {
+ editingIdx = null;
+ try {
+ await api.patchSegment(jobId, seg.idx, { text: e.detail });
+ segments[i] = { ...seg, text: e.detail, edited: true };
+ } catch {}
+ }}
+ on:cancel={() => (editingIdx = null)}
+ />
+ {:else}
+ <span
+ class="text-body cursor-text block"
+ on:dblclick|stopPropagation={() => (editingIdx = i)}
+ >{seg.text}</span>
+ {/if}
 </div>
 ```
 
@@ -471,55 +471,55 @@ Modify `SegmentList.svelte`: 세그먼트 div 하단에 아래 컨트롤 삽입 
 
 ```svelte
 {#if activeIdx === i}
-  <div class="flex gap-2 mt-2 text-caption">
-    <button
-      type="button"
-      class="px-2 py-1 rounded bg-divider-light dark:bg-surface-dark-elevated"
-      on:click={async () => {
-        const next = Math.max(0, seg.start - 0.1);
-        await api.patchSegment(jobId, seg.idx, { start: next });
-        segments[i] = { ...seg, start: next };
-      }}
-    >시작 −0.1</button>
-    <button
-      type="button"
-      class="px-2 py-1 rounded bg-divider-light dark:bg-surface-dark-elevated"
-      on:click={async () => {
-        const next = seg.start + 0.1;
-        await api.patchSegment(jobId, seg.idx, { start: next });
-        segments[i] = { ...seg, start: next };
-      }}
-    >시작 +0.1</button>
-    <button
-      type="button"
-      class="px-2 py-1 rounded bg-divider-light dark:bg-surface-dark-elevated"
-      on:click={async () => {
-        const next = Math.max(seg.start + 0.1, seg.end - 0.1);
-        await api.patchSegment(jobId, seg.idx, { end: next });
-        segments[i] = { ...seg, end: next };
-      }}
-    >끝 −0.1</button>
-    <button
-      type="button"
-      class="px-2 py-1 rounded bg-divider-light dark:bg-surface-dark-elevated"
-      on:click={async () => {
-        const next = seg.end + 0.1;
-        await api.patchSegment(jobId, seg.idx, { end: next });
-        segments[i] = { ...seg, end: next };
-      }}
-    >끝 +0.1</button>
-    <button
-      type="button"
-      class="ml-auto px-2 py-1 rounded bg-brand text-white"
-      on:click={async () => {
-        try {
-          await api.regenerateSegment(jobId, seg.idx);
-          // refetch all segments
-          segments = await api.segments(jobId);
-        } catch {}
-      }}
-    >↻ 재전사</button>
-  </div>
+ <div class="flex gap-2 mt-2 text-caption">
+ <button
+ type="button"
+ class="px-2 py-1 rounded bg-divider-light dark:bg-surface-dark-elevated"
+ on:click={async () => {
+ const next = Math.max(0, seg.start - 0.1);
+ await api.patchSegment(jobId, seg.idx, { start: next });
+ segments[i] = { ...seg, start: next };
+ }}
+ >시작 −0.1</button>
+ <button
+ type="button"
+ class="px-2 py-1 rounded bg-divider-light dark:bg-surface-dark-elevated"
+ on:click={async () => {
+ const next = seg.start + 0.1;
+ await api.patchSegment(jobId, seg.idx, { start: next });
+ segments[i] = { ...seg, start: next };
+ }}
+ >시작 +0.1</button>
+ <button
+ type="button"
+ class="px-2 py-1 rounded bg-divider-light dark:bg-surface-dark-elevated"
+ on:click={async () => {
+ const next = Math.max(seg.start + 0.1, seg.end - 0.1);
+ await api.patchSegment(jobId, seg.idx, { end: next });
+ segments[i] = { ...seg, end: next };
+ }}
+ >끝 −0.1</button>
+ <button
+ type="button"
+ class="px-2 py-1 rounded bg-divider-light dark:bg-surface-dark-elevated"
+ on:click={async () => {
+ const next = seg.end + 0.1;
+ await api.patchSegment(jobId, seg.idx, { end: next });
+ segments[i] = { ...seg, end: next };
+ }}
+ >끝 +0.1</button>
+ <button
+ type="button"
+ class="ml-auto px-2 py-1 rounded bg-brand text-white"
+ on:click={async () => {
+ try {
+ await api.regenerateSegment(jobId, seg.idx);
+ // refetch all segments
+ segments = await api.segments(jobId);
+ } catch {}
+ }}
+ >↻ 재전사</button>
+ </div>
 {/if}
 ```
 
@@ -551,43 +551,43 @@ Write `frontend/src/lib/ui/DownloadBar.svelte`:
 
 ```svelte
 <script lang="ts">
-  import { api } from '$lib/api/jobs';
-  import Button from '$lib/ui/Button.svelte';
-  export let jobId: string;
-  export let onBurnClick: () => void = () => {};
+ import { api } from '$lib/api/jobs';
+ import Button from '$lib/ui/Button.svelte';
+ export let jobId: string;
+ export let onBurnClick: () => void = () => {};
 </script>
 
 <div class="flex flex-wrap items-center gap-2">
-  <a
-    class="px-3 py-2 rounded-badge bg-divider-light dark:bg-surface-dark-elevated text-caption"
-    href={api.srtUrl(jobId)}
-    download
-  >.srt</a>
-  <a
-    class="px-3 py-2 rounded-badge bg-divider-light dark:bg-surface-dark-elevated text-caption"
-    href={api.vttUrl(jobId)}
-    download
-  >.vtt</a>
-  <a
-    class="px-3 py-2 rounded-badge bg-divider-light dark:bg-surface-dark-elevated text-caption"
-    href={api.txtUrl(jobId)}
-    download
-  >.txt</a>
-  <a
-    class="px-3 py-2 rounded-badge bg-divider-light dark:bg-surface-dark-elevated text-caption"
-    href={api.jsonUrl(jobId)}
-    download
-  >.json</a>
-  <a
-    class="px-3 py-2 rounded-badge bg-divider-light dark:bg-surface-dark-elevated text-caption"
-    href={api.mkvUrl(jobId)}
-    download
-  >.mkv</a>
-  <div class="ml-auto">
-    <Button variant="primary" on:click={onBurnClick}>
-      🔥 영상에 구워서 다운로드
-    </Button>
-  </div>
+ <a
+ class="px-3 py-2 rounded-badge bg-divider-light dark:bg-surface-dark-elevated text-caption"
+ href={api.srtUrl(jobId)}
+ download
+ >.srt</a>
+ <a
+ class="px-3 py-2 rounded-badge bg-divider-light dark:bg-surface-dark-elevated text-caption"
+ href={api.vttUrl(jobId)}
+ download
+ >.vtt</a>
+ <a
+ class="px-3 py-2 rounded-badge bg-divider-light dark:bg-surface-dark-elevated text-caption"
+ href={api.txtUrl(jobId)}
+ download
+ >.txt</a>
+ <a
+ class="px-3 py-2 rounded-badge bg-divider-light dark:bg-surface-dark-elevated text-caption"
+ href={api.jsonUrl(jobId)}
+ download
+ >.json</a>
+ <a
+ class="px-3 py-2 rounded-badge bg-divider-light dark:bg-surface-dark-elevated text-caption"
+ href={api.mkvUrl(jobId)}
+ download
+ >.mkv</a>
+ <div class="ml-auto">
+ <Button variant="primary" on:click={onBurnClick}>
+ 🔥 영상에 구워서 다운로드
+ </Button>
+ </div>
 </div>
 ```
 
@@ -597,53 +597,53 @@ Write `frontend/src/lib/ui/SearchReplace.svelte`:
 
 ```svelte
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  import { api } from '$lib/api/jobs';
-  import Button from '$lib/ui/Button.svelte';
+ import { createEventDispatcher } from 'svelte';
+ import { api } from '$lib/api/jobs';
+ import Button from '$lib/ui/Button.svelte';
 
-  export let jobId: string;
-  let find = '';
-  let replaceText = '';
-  let caseSensitive = false;
-  let lastChanged: number | null = null;
+ export let jobId: string;
+ let find = '';
+ let replaceText = '';
+ let caseSensitive = false;
+ let lastChanged: number | null = null;
 
-  const dispatch = createEventDispatcher<{ applied: void }>();
+ const dispatch = createEventDispatcher<{ applied: void }>();
 
-  async function run() {
-    if (!find.trim()) return;
-    try {
-      const res = await api.searchReplace(jobId, find, replaceText, caseSensitive);
-      lastChanged = res.changed_count;
-      if (res.changed_count > 0) dispatch('applied');
-    } catch {}
-  }
+ async function run() {
+ if (!find.trim()) return;
+ try {
+ const res = await api.searchReplace(jobId, find, replaceText, caseSensitive);
+ lastChanged = res.changed_count;
+ if (res.changed_count > 0) dispatch('applied');
+ } catch {}
+ }
 </script>
 
 <div class="card p-4 flex flex-col gap-3">
-  <div class="flex items-center gap-2">
-    <input
-      class="flex-1 px-3 py-2 bg-divider-light dark:bg-surface-dark-elevated rounded-input text-body"
-      placeholder="찾을 단어"
-      bind:value={find}
-    />
-    <input
-      class="flex-1 px-3 py-2 bg-divider-light dark:bg-surface-dark-elevated rounded-input text-body"
-      placeholder="바꿀 단어"
-      bind:value={replaceText}
-    />
-  </div>
-  <label class="text-caption flex items-center gap-2">
-    <input type="checkbox" bind:checked={caseSensitive} />
-    대소문자 구분
-  </label>
-  <div class="flex items-center gap-3">
-    <Button variant="primary" on:click={run}>모두 바꾸기</Button>
-    {#if lastChanged !== null}
-      <span class="text-caption text-text-secondary-light dark:text-text-secondary-dark">
-        {lastChanged}개 세그먼트를 변경했어요
-      </span>
-    {/if}
-  </div>
+ <div class="flex items-center gap-2">
+ <input
+ class="flex-1 px-3 py-2 bg-divider-light dark:bg-surface-dark-elevated rounded-input text-body"
+ placeholder="찾을 단어"
+ bind:value={find}
+ />
+ <input
+ class="flex-1 px-3 py-2 bg-divider-light dark:bg-surface-dark-elevated rounded-input text-body"
+ placeholder="바꿀 단어"
+ bind:value={replaceText}
+ />
+ </div>
+ <label class="text-caption flex items-center gap-2">
+ <input type="checkbox" bind:checked={caseSensitive} />
+ 대소문자 구분
+ </label>
+ <div class="flex items-center gap-3">
+ <Button variant="primary" on:click={run}>모두 바꾸기</Button>
+ {#if lastChanged !== null}
+ <span class="text-caption text-text-secondary-light dark:text-text-secondary-dark">
+ {lastChanged}개 세그먼트를 변경했어요
+ </span>
+ {/if}
+ </div>
 </div>
 ```
 
@@ -665,20 +665,20 @@ Modify `frontend/src/lib/screens/ReadyScreen.svelte`:
 
 ```svelte
 <div class="mb-3">
-  <button
-    class="text-caption text-brand"
-    on:click={() => (showSearch = !showSearch)}
-  >🔍 찾아 바꾸기</button>
+ <button
+ class="text-caption text-brand"
+ on:click={() => (showSearch = !showSearch)}
+ >🔍 찾아 바꾸기</button>
 </div>
 {#if showSearch}
-  <div class="mb-4">
-    <SearchReplace
-      {jobId}
-      on:applied={async () => {
-        segments = await api.segments(jobId);
-      }}
-    />
-  </div>
+ <div class="mb-4">
+ <SearchReplace
+ {jobId}
+ on:applied={async () => {
+ segments = await api.segments(jobId);
+ }}
+ />
+ </div>
 {/if}
 ```
 
@@ -709,52 +709,52 @@ Write `frontend/src/lib/screens/useShortcuts.ts`:
 
 ```typescript
 export interface ShortcutHandlers {
-  togglePlay: () => void;
-  prevSegment: () => void;
-  nextSegment: () => void;
-  seekRelative: (delta: number) => void;
-  regenerateCurrent: () => void;
-  toggleSearch: () => void;
+ togglePlay: () => void;
+ prevSegment: () => void;
+ nextSegment: () => void;
+ seekRelative: (delta: number) => void;
+ regenerateCurrent: () => void;
+ toggleSearch: () => void;
 }
 
 export function installShortcuts(handlers: ShortcutHandlers): () => void {
-  function onKey(e: KeyboardEvent) {
-    const target = e.target as HTMLElement | null;
-    if (target && (target.tagName === 'INPUT' || target.isContentEditable)) {
-      return;
-    }
-    switch (e.key) {
-      case ' ':
-        e.preventDefault();
-        handlers.togglePlay();
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        handlers.prevSegment();
-        break;
-      case 'ArrowDown':
-        e.preventDefault();
-        handlers.nextSegment();
-        break;
-      case 'j':
-        handlers.seekRelative(-5);
-        break;
-      case 'l':
-        handlers.seekRelative(5);
-        break;
-      case 'r':
-      case 'R':
-        handlers.regenerateCurrent();
-        break;
-      default:
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
-          e.preventDefault();
-          handlers.toggleSearch();
-        }
-    }
-  }
-  window.addEventListener('keydown', onKey);
-  return () => window.removeEventListener('keydown', onKey);
+ function onKey(e: KeyboardEvent) {
+ const target = e.target as HTMLElement | null;
+ if (target && (target.tagName === 'INPUT' || target.isContentEditable)) {
+ return;
+ }
+ switch (e.key) {
+ case ' ':
+ e.preventDefault();
+ handlers.togglePlay();
+ break;
+ case 'ArrowUp':
+ e.preventDefault();
+ handlers.prevSegment();
+ break;
+ case 'ArrowDown':
+ e.preventDefault();
+ handlers.nextSegment();
+ break;
+ case 'j':
+ handlers.seekRelative(-5);
+ break;
+ case 'l':
+ handlers.seekRelative(5);
+ break;
+ case 'r':
+ case 'R':
+ handlers.regenerateCurrent();
+ break;
+ default:
+ if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
+ e.preventDefault();
+ handlers.toggleSearch();
+ }
+ }
+ }
+ window.addEventListener('keydown', onKey);
+ return () => window.removeEventListener('keydown', onKey);
 }
 ```
 
@@ -768,34 +768,34 @@ import { installShortcuts } from './useShortcuts';
 let unshort: (() => void) | null = null;
 
 onMount(() => {
-  unshort = installShortcuts({
-    togglePlay: () => playerRef?.togglePlay(),
-    prevSegment: () => {
-      const i = segments.findIndex((s) => currentTime >= s.start && currentTime < s.end);
-      if (i > 0) playerRef?.seekTo(segments[i - 1].start);
-    },
-    nextSegment: () => {
-      const i = segments.findIndex((s) => currentTime >= s.start && currentTime < s.end);
-      if (i >= 0 && i < segments.length - 1) playerRef?.seekTo(segments[i + 1].start);
-    },
-    seekRelative: (d) => {
-      const t = Math.max(0, currentTime + d);
-      playerRef?.seekTo(t);
-    },
-    regenerateCurrent: async () => {
-      const i = segments.findIndex((s) => currentTime >= s.start && currentTime < s.end);
-      if (i < 0) return;
-      try {
-        await api.regenerateSegment(jobId, segments[i].idx);
-        segments = await api.segments(jobId);
-      } catch {}
-    },
-    toggleSearch: () => (showSearch = !showSearch)
-  });
+ unshort = installShortcuts({
+ togglePlay: () => playerRef?.togglePlay(),
+ prevSegment: () => {
+ const i = segments.findIndex((s) => currentTime >= s.start && currentTime < s.end);
+ if (i > 0) playerRef?.seekTo(segments[i - 1].start);
+ },
+ nextSegment: () => {
+ const i = segments.findIndex((s) => currentTime >= s.start && currentTime < s.end);
+ if (i >= 0 && i < segments.length - 1) playerRef?.seekTo(segments[i + 1].start);
+ },
+ seekRelative: (d) => {
+ const t = Math.max(0, currentTime + d);
+ playerRef?.seekTo(t);
+ },
+ regenerateCurrent: async () => {
+ const i = segments.findIndex((s) => currentTime >= s.start && currentTime < s.end);
+ if (i < 0) return;
+ try {
+ await api.regenerateSegment(jobId, segments[i].idx);
+ segments = await api.segments(jobId);
+ } catch {}
+ },
+ toggleSearch: () => (showSearch = !showSearch)
+ });
 });
 
 onDestroy(() => {
-  unshort?.();
+ unshort?.();
 });
 ```
 

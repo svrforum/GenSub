@@ -53,31 +53,31 @@ GenSub은 YouTube 영상 URL(또는 업로드된 로컬 영상 파일)을 입력
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Docker Compose                        │
-│                                                             │
-│   ┌──────────────────────┐      ┌─────────────────────┐    │
-│   │   api (FastAPI)      │      │   worker (Python)   │    │
-│   │                      │      │                     │    │
-│   │  • REST + SSE        │      │  • Job 폴링 루프    │    │
-│   │  • SvelteKit 정적    │      │  • yt-dlp           │    │
-│   │    파일 서빙         │      │  • faster-whisper   │    │
-│   │  • 파일 스트리밍     │      │  • ffmpeg 렌더링    │    │
-│   │    (HTTP Range)      │      │                     │    │
-│   └──────────┬───────────┘      └──────────┬──────────┘    │
-│              │                              │              │
-│              └──────┬───────────────┬───────┘              │
-│                     ▼               ▼                      │
-│              ┌─────────────┐  ┌─────────────────┐          │
-│              │ ./data/db   │  │  ./data/media   │          │
-│              │  jobs.db    │  │  (공유 볼륨)    │          │
-│              │ (SQLite)    │  │                 │          │
-│              └─────────────┘  └─────────────────┘          │
-│                                                             │
+│ Docker Compose │
+│ │
+│ ┌──────────────────────┐ ┌─────────────────────┐ │
+│ │ api (FastAPI) │ │ worker (Python) │ │
+│ │ │ │ │ │
+│ │ • REST + SSE │ │ • Job 폴링 루프 │ │
+│ │ • SvelteKit 정적 │ │ • yt-dlp │ │
+│ │ 파일 서빙 │ │ • faster-whisper │ │
+│ │ • 파일 스트리밍 │ │ • ffmpeg 렌더링 │ │
+│ │ (HTTP Range) │ │ │ │
+│ └──────────┬───────────┘ └──────────┬──────────┘ │
+│ │ │ │
+│ └──────┬───────────────┬───────┘ │
+│ ▼ ▼ │
+│ ┌─────────────┐ ┌─────────────────┐ │
+│ │ ./data/db │ │ ./data/media │ │
+│ │ jobs.db │ │ (공유 볼륨) │ │
+│ │ (SQLite) │ │ │ │
+│ └─────────────┘ └─────────────────┘ │
+│ │
 └─────────────────────────────────────────────────────────────┘
-                          │
-                          │ :8000 (호스트 포트)
-                          ▼
-                     브라우저
+ │
+ │ :8000 (호스트 포트)
+ ▼
+ 브라우저
 ```
 
 ### 3.2 핵심 아키텍처 결정
@@ -99,40 +99,40 @@ GenSub은 YouTube 영상 URL(또는 업로드된 로컬 영상 파일)을 입력
 
 ```
 [브라우저]
-    │
-    │ 1. POST /api/jobs { url, model, language }
-    ▼
+ │
+ │ 1. POST /api/jobs { url, model, language }
+ ▼
 [FastAPI API]
-    │
-    │ 2. SQLite에 Job 레코드 생성 (status=pending)
-    │    응답: { job_id }
-    ▼
-[SQLite jobs.db]  ◀─────────── 3. 폴링 (1~2s)
-    ▲                         │
-    │                         │
-    │ 4. 상태/진행률 업데이트 │
-    │                         ▼
-    │                    [Python Worker]
-    │                         │
-    │                         │ 5. yt-dlp 다운로드 → source.mp4
-    │                         │ 6. ffmpeg로 wav 추출
-    │                         │ 7. faster-whisper 전사
-    │                         │ 8. SRT/VTT 생성
-    │                         │ 9. status=ready, 세그먼트 DB 저장
-    │                         ▼
-    │                    [./data/media/<job_id>/]
-    │                         source.mp4
-    │                         audio.wav
-    │                         subtitles.srt
-    │                         subtitles.vtt
-    │
-    │ 10. SSE로 브라우저에 진행률 push
-    ▼
+ │
+ │ 2. SQLite에 Job 레코드 생성 (status=pending)
+ │ 응답: { job_id }
+ ▼
+[SQLite jobs.db] ◀─────────── 3. 폴링 (1~2s)
+ ▲ │
+ │ │
+ │ 4. 상태/진행률 업데이트 │
+ │ ▼
+ │ [Python Worker]
+ │ │
+ │ │ 5. yt-dlp 다운로드 → source.mp4
+ │ │ 6. ffmpeg로 wav 추출
+ │ │ 7. faster-whisper 전사
+ │ │ 8. SRT/VTT 생성
+ │ │ 9. status=ready, 세그먼트 DB 저장
+ │ ▼
+ │ [./data/media/<job_id>/]
+ │ source.mp4
+ │ audio.wav
+ │ subtitles.srt
+ │ subtitles.vtt
+ │
+ │ 10. SSE로 브라우저에 진행률 push
+ ▼
 [브라우저]
-    │
-    │ 11. status=ready 수신 → 플레이어 + 편집기 표시
-    │ 12. GET /api/jobs/:id/video (HTTP Range 스트리밍)
-    │ 13. GET /api/jobs/:id/subtitles.vtt (<track>)
+ │
+ │ 11. status=ready 수신 → 플레이어 + 편집기 표시
+ │ 12. GET /api/jobs/:id/video (HTTP Range 스트리밍)
+ │ 13. GET /api/jobs/:id/subtitles.vtt (<track>)
 ```
 
 ---
@@ -143,13 +143,13 @@ GenSub은 YouTube 영상 URL(또는 업로드된 로컬 영상 파일)을 입력
 
 ```
 pending → downloading → transcribing → ready
-                                         │
-                       (사용자가 "구워서 다운로드" 클릭 시)
-                                         ▼
-                                      burning → done
-       ┌────────────────────────────────┘
-       ▼
-   failed (어느 단계에서든 실패 시, 에러 메시지 포함)
+ │
+ (사용자가 "구워서 다운로드" 클릭 시)
+ ▼
+ burning → done
+ ┌────────────────────────────────┘
+ ▼
+ failed (어느 단계에서든 실패 시, 에러 메시지 포함)
 ```
 
 상태 정의:
@@ -179,13 +179,13 @@ pending → downloading → transcribing → ready
 **2단계: 음성 추출 및 전사 (faster-whisper)**
 - ffmpeg로 `source.mp4` → 16kHz 모노 wav 추출 (`audio.wav`)
 - `faster-whisper`의 `transcribe()` 호출
-  - `beam_size=5`
-  - `vad_filter=True` — 무음 구간 자동 컷
-  - `word_timestamps=True` — 단어 단위 타임스탬프 (편집기 유용)
-  - 언어는 자동 감지 또는 사용자 지정
-  - 기본 모델: `small`. 사용자가 `tiny`/`base`/`small`/`medium`/`large-v3` 중 선택
-  - 연산 정밀도: `COMPUTE_TYPE` env에 따라 `int8` (CPU) 또는 `float16` (GPU)
-  - `initial_prompt`: 사용자 사전 기능으로 전달 가능 (2차 기능)
+ - `beam_size=5`
+ - `vad_filter=True` — 무음 구간 자동 컷
+ - `word_timestamps=True` — 단어 단위 타임스탬프 (편집기 유용)
+ - 언어는 자동 감지 또는 사용자 지정
+ - 기본 모델: `small`. 사용자가 `tiny`/`base`/`small`/`medium`/`large-v3` 중 선택
+ - 연산 정밀도: `COMPUTE_TYPE` env에 따라 `int8` (CPU) 또는 `float16` (GPU)
+ - `initial_prompt`: 사용자 사전 기능으로 전달 가능 (2차 기능)
 - 결과를 `Segment` 레코드로 DB에 저장 + `subtitles.srt`, `subtitles.vtt` 파일 생성
 - 진행률 계산: 처리된 타임스탬프 / 총 오디오 길이
 
@@ -193,10 +193,10 @@ pending → downloading → transcribing → ready
 - 영상은 HTTP Range로 스트리밍, 자막은 VTT를 `<track>`로 로드
 - 세그먼트 편집은 DB 업데이트 + SRT/VTT 재생성으로 즉시 반영
 - 다운로드 옵션:
-  - `subtitles.srt` / `subtitles.vtt` 단독
-  - `transcript.txt` (순수 텍스트)
-  - `transcript.json` (타임스탬프 포함)
-  - `video+subs.mkv` (mkvmerge로 먹스, 재인코딩 없음, 수 초 소요)
+ - `subtitles.srt` / `subtitles.vtt` 단독
+ - `transcript.txt` (순수 텍스트)
+ - `transcript.json` (타임스탬프 포함)
+ - `video+subs.mkv` (mkvmerge로 먹스, 재인코딩 없음, 수 초 소요)
 
 **4단계: Burn-in (옵션)**
 - 사용자가 "영상에 구워서 다운로드" 클릭 시 트리거
@@ -268,34 +268,34 @@ pending → downloading → transcribing → ready
 
 ```python
 class Job(SQLModel, table=True):
-    id: str = Field(primary_key=True)                # UUID4
-    source_url: str | None                            # YouTube 등 URL (업로드면 None)
-    source_kind: str                                  # "url" | "upload"
-    title: str | None                                 # yt-dlp 메타데이터에서
-    duration_sec: float | None
-    language: str | None                              # 자동 감지 결과 or 지정
-    model_name: str
-    initial_prompt: str | None                        # 2차 기능
-    status: str
-    progress: float                                   # 0.0 ~ 1.0 (현재 단계)
-    stage_message: str | None
-    error_message: str | None
-    created_at: datetime
-    updated_at: datetime
-    expires_at: datetime
-    cancel_requested: bool = False
+ id: str = Field(primary_key=True) # UUID4
+ source_url: str | None # YouTube 등 URL (업로드면 None)
+ source_kind: str # "url" | "upload"
+ title: str | None # yt-dlp 메타데이터에서
+ duration_sec: float | None
+ language: str | None # 자동 감지 결과 or 지정
+ model_name: str
+ initial_prompt: str | None # 2차 기능
+ status: str
+ progress: float # 0.0 ~ 1.0 (현재 단계)
+ stage_message: str | None
+ error_message: str | None
+ created_at: datetime
+ updated_at: datetime
+ expires_at: datetime
+ cancel_requested: bool = False
 
 class Segment(SQLModel, table=True):
-    id: int = Field(primary_key=True)
-    job_id: str = Field(foreign_key="job.id", index=True)
-    idx: int
-    start: float                                      # 초
-    end: float
-    text: str
-    avg_logprob: float | None                         # 저신뢰도 판별용
-    no_speech_prob: float | None
-    edited: bool = False
-    words: str | None                                 # JSON: word-level timestamps
+ id: int = Field(primary_key=True)
+ job_id: str = Field(foreign_key="job.id", index=True)
+ idx: int
+ start: float # 초
+ end: float
+ text: str
+ avg_logprob: float | None # 저신뢰도 판별용
+ no_speech_prob: float | None
+ edited: bool = False
+ words: str | None # JSON: word-level timestamps
 ```
 
 - 데이터베이스 파일: `./data/db/jobs.db`
@@ -305,53 +305,53 @@ class Segment(SQLModel, table=True):
 
 **작업 생성 및 관리**
 ```
-POST   /api/jobs
-         body: { url?, model, language?, initial_prompt? }
-         → { job_id, status: "pending" }
+POST /api/jobs
+ body: { url?, model, language?, initial_prompt? }
+ → { job_id, status: "pending" }
 
-POST   /api/jobs/upload
-         multipart: file + { model, language?, initial_prompt? }
-         → { job_id }
+POST /api/jobs/upload
+ multipart: file + { model, language?, initial_prompt? }
+ → { job_id }
 
-GET    /api/jobs/{id}
-         → Job JSON
+GET /api/jobs/{id}
+ → Job JSON
 
-GET    /api/jobs/{id}/events                    # SSE 스트림
-         event 형식: { status, progress, stage_message, eta_sec? }
+GET /api/jobs/{id}/events # SSE 스트림
+ event 형식: { status, progress, stage_message, eta_sec? }
 
-POST   /api/jobs/{id}/cancel
-         → { ok: true }
+POST /api/jobs/{id}/cancel
+ → { ok: true }
 
-DELETE /api/jobs/{id}                           # 즉시 삭제
+DELETE /api/jobs/{id} # 즉시 삭제
 ```
 
 **미디어**
 ```
-GET    /api/jobs/{id}/video                     # HTTP Range 스트리밍
-GET    /api/jobs/{id}/subtitles.vtt
-GET    /api/jobs/{id}/subtitles.srt
-GET    /api/jobs/{id}/transcript.txt
-GET    /api/jobs/{id}/transcript.json
-GET    /api/jobs/{id}/download/video+subs.mkv
-POST   /api/jobs/{id}/burn
-GET    /api/jobs/{id}/download/burned.mp4
+GET /api/jobs/{id}/video # HTTP Range 스트리밍
+GET /api/jobs/{id}/subtitles.vtt
+GET /api/jobs/{id}/subtitles.srt
+GET /api/jobs/{id}/transcript.txt
+GET /api/jobs/{id}/transcript.json
+GET /api/jobs/{id}/download/video+subs.mkv
+POST /api/jobs/{id}/burn
+GET /api/jobs/{id}/download/burned.mp4
 ```
 
 **세그먼트 편집**
 ```
-GET    /api/jobs/{id}/segments
-PATCH  /api/jobs/{id}/segments/{idx}
-         body: { text?, start?, end? }
-POST   /api/jobs/{id}/segments/{idx}/regenerate
-POST   /api/jobs/{id}/search_replace
-         body: { find, replace, case_sensitive? }
-         → { changed_count }
+GET /api/jobs/{id}/segments
+PATCH /api/jobs/{id}/segments/{idx}
+ body: { text?, start?, end? }
+POST /api/jobs/{id}/segments/{idx}/regenerate
+POST /api/jobs/{id}/search_replace
+ body: { find, replace, case_sensitive? }
+ → { changed_count }
 ```
 
 **기타**
 ```
-GET    /api/health                              # { ok, model_cache_size, disk_free }
-GET    /api/config                              # 프론트용 기본값, 모델 목록, 제한값
+GET /api/health # { ok, model_cache_size, disk_free }
+GET /api/config # 프론트용 기본값, 모델 목록, 제한값
 ```
 
 ### 6.3 SSE 이벤트 포맷
@@ -461,10 +461,10 @@ GenSub은 상태에 따라 주연이 바뀌는 단일 SPA이다.
 - 큰 원형 진행률 (지름 140px, 선 8px, Toss Blue, round cap)
 - 진행률 숫자는 Display 사이즈, crossfade 트랜지션
 - 단계별 카피 로테이션:
-  - `pending` → "준비하고 있어요"
-  - `downloading` → "영상을 가져오고 있어요"
-  - `transcribing` → "음성을 듣고 있어요"
-  - `burning` → "자막을 영상에 입히고 있어요"
+ - `pending` → "준비하고 있어요"
+ - `downloading` → "영상을 가져오고 있어요"
+ - `transcribing` → "음성을 듣고 있어요"
+ - `burning` → "자막을 영상에 입히고 있어요"
 - 같은 단계에서 10초마다 카피 바뀜 (정지감 방지)
 - 남은 시간 ETA 표시
 - 텍스트 "취소" 버튼
@@ -541,30 +541,30 @@ GenSub/
 ├── compose.override.yaml.example
 ├── .env.example
 ├── README.md
-├── Dockerfile                      (멀티 스테이지: frontend + python)
+├── Dockerfile (멀티 스테이지: frontend + python)
 ├── backend/
-│   ├── pyproject.toml
-│   ├── uv.lock
-│   ├── app/
-│   │   ├── main.py                 (FastAPI 엔트리)
-│   │   ├── api/                    (라우터)
-│   │   ├── core/                   (설정, DB, SSE)
-│   │   ├── models/                 (SQLModel)
-│   │   └── services/               (파이프라인 로직, 워커와 공유)
-│   ├── worker/
-│   │   └── main.py                 (워커 엔트리)
-│   └── tests/
+│ ├── pyproject.toml
+│ ├── uv.lock
+│ ├── app/
+│ │ ├── main.py (FastAPI 엔트리)
+│ │ ├── api/ (라우터)
+│ │ ├── core/ (설정, DB, SSE)
+│ │ ├── models/ (SQLModel)
+│ │ └── services/ (파이프라인 로직, 워커와 공유)
+│ ├── worker/
+│ │ └── main.py (워커 엔트리)
+│ └── tests/
 ├── frontend/
-│   ├── package.json
-│   ├── svelte.config.js            (adapter-static)
-│   ├── src/
-│   └── static/
+│ ├── package.json
+│ ├── svelte.config.js (adapter-static)
+│ ├── src/
+│ └── static/
 ├── docs/
-│   └── superpowers/specs/
-└── data/                           (gitignore, bind mount 대상)
-    ├── db/
-    ├── media/
-    └── models/
+│ └── superpowers/specs/
+└── data/ (gitignore, bind mount 대상)
+ ├── db/
+ ├── media/
+ └── models/
 ```
 
 ### 8.2 Dockerfile (멀티 스테이지)
@@ -582,12 +582,12 @@ RUN npm run build
 FROM python:3.11-slim AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ffmpeg \
-        mkvtoolnix \
-        libsndfile1 \
-        ca-certificates \
-        curl \
-    && rm -rf /var/lib/apt/lists/*
+ ffmpeg \
+ mkvtoolnix \
+ libsndfile1 \
+ ca-certificates \
+ curl \
+ && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir uv
 
@@ -611,55 +611,55 @@ CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "800
 
 ```yaml
 services:
-  api:
-    build: .
-    image: gensub:latest
-    container_name: gensub-api
-    ports:
-      - "${GENSUB_PORT:-8000}:8000"
-    environment:
-      GENSUB_ROLE: api
-      DATABASE_URL: sqlite:////data/db/jobs.db
-      MEDIA_DIR: /data/media
-      MODEL_CACHE_DIR: /data/models
-      JOB_TTL_HOURS: ${JOB_TTL_HOURS:-24}
-      MAX_VIDEO_MINUTES: ${MAX_VIDEO_MINUTES:-90}
-      DEFAULT_MODEL: ${DEFAULT_MODEL:-small}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-*}
-    volumes:
-      - ./data:/data
-    command: >
-      uv run uvicorn app.main:app
-      --host 0.0.0.0 --port 8000
-      --proxy-headers
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+ api:
+ build: .
+ image: gensub:latest
+ container_name: gensub-api
+ ports:
+ - "${GENSUB_PORT:-8000}:8000"
+ environment:
+ GENSUB_ROLE: api
+ DATABASE_URL: sqlite:////data/db/jobs.db
+ MEDIA_DIR: /data/media
+ MODEL_CACHE_DIR: /data/models
+ JOB_TTL_HOURS: ${JOB_TTL_HOURS:-24}
+ MAX_VIDEO_MINUTES: ${MAX_VIDEO_MINUTES:-90}
+ DEFAULT_MODEL: ${DEFAULT_MODEL:-small}
+ OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+ CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-*}
+ volumes:
+ - ./data:/data
+ command: >
+ uv run uvicorn app.main:app
+ --host 0.0.0.0 --port 8000
+ --proxy-headers
+ restart: unless-stopped
+ healthcheck:
+ test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health"]
+ interval: 30s
+ timeout: 5s
+ retries: 3
 
-  worker:
-    build: .
-    image: gensub:latest
-    container_name: gensub-worker
-    depends_on:
-      - api
-    environment:
-      GENSUB_ROLE: worker
-      DATABASE_URL: sqlite:////data/db/jobs.db
-      MEDIA_DIR: /data/media
-      MODEL_CACHE_DIR: /data/models
-      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
-      DEFAULT_MODEL: ${DEFAULT_MODEL:-small}
-      COMPUTE_TYPE: ${COMPUTE_TYPE:-int8}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-    volumes:
-      - ./data:/data
-    command: >
-      uv run python -m worker.main
-    restart: unless-stopped
+ worker:
+ build: .
+ image: gensub:latest
+ container_name: gensub-worker
+ depends_on:
+ - api
+ environment:
+ GENSUB_ROLE: worker
+ DATABASE_URL: sqlite:////data/db/jobs.db
+ MEDIA_DIR: /data/media
+ MODEL_CACHE_DIR: /data/models
+ WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
+ DEFAULT_MODEL: ${DEFAULT_MODEL:-small}
+ COMPUTE_TYPE: ${COMPUTE_TYPE:-int8}
+ OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+ volumes:
+ - ./data:/data
+ command: >
+ uv run python -m worker.main
+ restart: unless-stopped
 ```
 
 ### 8.4 .env.example
@@ -693,7 +693,7 @@ CORS_ALLOW_ORIGIN=*
 ### 8.5 파일 생명주기 및 정리
 
 - API 시작 시 백그라운드 태스크로 주기적 정리 루프 (1시간 간격)
-  - `expires_at < now()` 인 작업 → DB 레코드 삭제 + `data/media/<job_id>/` rmtree
+ - `expires_at < now()` 인 작업 → DB 레코드 삭제 + `data/media/<job_id>/` rmtree
 - API 시작 시 좀비 작업 정리: `downloading`/`transcribing`/`burning` 상태를 `failed`로 마킹
 - 디스크 용량 확인 후 임계치 이하면 신규 작업 거부
 
@@ -702,7 +702,7 @@ CORS_ALLOW_ORIGIN=*
 ```bash
 git clone https://github.com/.../GenSub.git
 cd GenSub
-cp .env.example .env   # 필요 시 수정
+cp .env.example .env # 필요 시 수정
 docker compose up -d
 open http://localhost:8000
 ```
@@ -717,20 +717,20 @@ README 주의사항:
 
 ```yaml
 services:
-  api:
-    volumes:
-      - ./backend:/app
-      - ./data:/data
-    command: >
-      uv run uvicorn app.main:app
-      --host 0.0.0.0 --port 8000
-      --reload
-  worker:
-    volumes:
-      - ./backend:/app
-      - ./data:/data
-    command: >
-      uv run watchfiles "python -m worker.main" /app
+ api:
+ volumes:
+ - ./backend:/app
+ - ./data:/data
+ command: >
+ uv run uvicorn app.main:app
+ --host 0.0.0.0 --port 8000
+ --reload
+ worker:
+ volumes:
+ - ./backend:/app
+ - ./data:/data
+ command: >
+ uv run watchfiles "python -m worker.main" /app
 ```
 
 ---

@@ -48,8 +48,6 @@ docs(spec): mark 2026-04-11 design as historical, link to current state
 
 초기 설계 스펙은 설계 의도 보존용으로 유지하되, 상단 안내 박스로
 현재 상태는 docs/architecture.md, 2026-04-18 리팩토링 스펙도 함께 안내.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -89,7 +87,7 @@ merge: stability refactor + docs consolidation (2026-04-18)
 
 Phase 2 문서 3종:
 - docs/architecture.md — 현재 아키텍처 기록
-- CLAUDE.md — 개발·에이전트 규약 (모델=Opus 4.7 고정 포함)
+- CLAUDE.md — 개발·에이전트 규약 (모델= 고정 포함)
 - README.md — 프로젝트 소개 + quickstart 재작성
 - 루트 스크린샷 39장 정리, 2장은 docs/images/로
 
@@ -107,8 +105,6 @@ backup, burn_cancel).
 
 Spec: docs/superpowers/specs/2026-04-18-stability-refactor-design.md
 Plan: docs/superpowers/plans/2026-04-18-stability-refactor/
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```

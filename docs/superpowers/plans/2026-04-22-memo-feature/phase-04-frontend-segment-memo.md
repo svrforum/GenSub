@@ -29,52 +29,52 @@ export const jobMemos = writable<Map<number, JobMemoLiteDto>>(new Map());
 let currentJobId: string | null = null;
 
 export async function loadJobMemos(jobId: string): Promise<void> {
-  if (currentJobId === jobId) return;
-  currentJobId = jobId;
-  try {
-    const res = await memoApi.listForJob(jobId);
-    const map = new Map<number, JobMemoLiteDto>();
-    for (const m of res.items) {
-      map.set(m.segment_idx, m);
-    }
-    jobMemos.set(map);
-  } catch {
-    jobMemos.set(new Map());
-  }
+ if (currentJobId === jobId) return;
+ currentJobId = jobId;
+ try {
+ const res = await memoApi.listForJob(jobId);
+ const map = new Map<number, JobMemoLiteDto>();
+ for (const m of res.items) {
+ map.set(m.segment_idx, m);
+ }
+ jobMemos.set(map);
+ } catch {
+ jobMemos.set(new Map());
+ }
 }
 
 export function clearJobMemos(): void {
-  currentJobId = null;
-  jobMemos.set(new Map());
+ currentJobId = null;
+ jobMemos.set(new Map());
 }
 
 export function setJobMemo(memo: JobMemoLiteDto): void {
-  jobMemos.update((m) => {
-    const next = new Map(m);
-    next.set(memo.segment_idx, memo);
-    return next;
-  });
+ jobMemos.update((m) => {
+ const next = new Map(m);
+ next.set(memo.segment_idx, memo);
+ return next;
+ });
 }
 
 export function unsetJobMemo(segmentIdx: number): void {
-  jobMemos.update((m) => {
-    const next = new Map(m);
-    next.delete(segmentIdx);
-    return next;
-  });
+ jobMemos.update((m) => {
+ const next = new Map(m);
+ next.delete(segmentIdx);
+ return next;
+ });
 }
 
 export function updateJobMemoText(memoId: number, memoText: string): void {
-  jobMemos.update((m) => {
-    const next = new Map(m);
-    for (const [idx, memo] of next) {
-      if (memo.id === memoId) {
-        next.set(idx, { ...memo, memo_text: memoText });
-        break;
-      }
-    }
-    return next;
-  });
+ jobMemos.update((m) => {
+ const next = new Map(m);
+ for (const [idx, memo] of next) {
+ if (memo.id === memoId) {
+ next.set(idx, { ...memo, memo_text: memoText });
+ break;
+ }
+ }
+ return next;
+ });
 }
 ```
 
@@ -100,8 +100,6 @@ loadJobMemos(jobId) 한 번 호출, SegmentMemo 컴포넌트들이 이 map으로
 자신의 저장 상태를 판단.
 
 낙관적 업데이트 헬퍼: setJobMemo / unsetJobMemo / updateJobMemoText.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -127,158 +125,158 @@ Write `frontend/src/lib/ui/SegmentMemo.svelte`:
 
 ```svelte
 <script lang="ts">
-  import { Bookmark, Pencil, Trash2 } from 'lucide-svelte';
+ import { Bookmark, Pencil, Trash2 } from 'lucide-svelte';
 
-  import { ApiError } from '$lib/api/client';
-  import { memoApi } from '$lib/api/memo';
-  import {
-    jobMemos,
-    setJobMemo,
-    unsetJobMemo,
-    updateJobMemoText,
-  } from '$lib/stores/jobMemos';
-  import { refreshMemos } from '$lib/stores/memos';
+ import { ApiError } from '$lib/api/client';
+ import { memoApi } from '$lib/api/memo';
+ import {
+ jobMemos,
+ setJobMemo,
+ unsetJobMemo,
+ updateJobMemoText,
+ } from '$lib/stores/jobMemos';
+ import { refreshMemos } from '$lib/stores/memos';
 
-  export let jobId: string;
-  export let segmentIdx: number;
+ export let jobId: string;
+ export let segmentIdx: number;
 
-  let editing = false;
-  let editValue = '';
-  let saving = false;
+ let editing = false;
+ let editValue = '';
+ let saving = false;
 
-  $: memo = $jobMemos.get(segmentIdx);
-  $: isSaved = memo !== undefined;
+ $: memo = $jobMemos.get(segmentIdx);
+ $: isSaved = memo !== undefined;
 
-  async function toggleSave() {
-    if (saving) return;
-    saving = true;
-    try {
-      const res = await memoApi.toggleSave(jobId, segmentIdx);
-      if (res.action === 'created' && res.memo) {
-        setJobMemo({
-          id: res.memo.id,
-          job_id: res.memo.job_id,
-          segment_idx: res.memo.segment_idx,
-          memo_text: res.memo.memo_text,
-        });
-        refreshMemos();  // 전역 리스트 갱신 (불변 관계)
-      } else if (res.action === 'deleted') {
-        unsetJobMemo(segmentIdx);
-        refreshMemos();
-      }
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        const detail = (err as ApiError & { detail?: unknown }).detail;
-        const memoId =
-          typeof detail === 'object' && detail && 'memo_id' in detail
-            ? (detail as { memo_id: number }).memo_id
-            : memo?.id;
-        if (memoId && confirm('이 메모에 내용이 있어요. 함께 삭제할까요?')) {
-          await memoApi.delete(memoId);
-          unsetJobMemo(segmentIdx);
-          refreshMemos();
-        }
-      } else {
-        console.error('toggle memo failed', err);
-      }
-    } finally {
-      saving = false;
-    }
-  }
+ async function toggleSave() {
+ if (saving) return;
+ saving = true;
+ try {
+ const res = await memoApi.toggleSave(jobId, segmentIdx);
+ if (res.action === 'created' && res.memo) {
+ setJobMemo({
+ id: res.memo.id,
+ job_id: res.memo.job_id,
+ segment_idx: res.memo.segment_idx,
+ memo_text: res.memo.memo_text,
+ });
+ refreshMemos(); // 전역 리스트 갱신 (불변 관계)
+ } else if (res.action === 'deleted') {
+ unsetJobMemo(segmentIdx);
+ refreshMemos();
+ }
+ } catch (err) {
+ if (err instanceof ApiError && err.status === 409) {
+ const detail = (err as ApiError & { detail?: unknown }).detail;
+ const memoId =
+ typeof detail === 'object' && detail && 'memo_id' in detail
+ ? (detail as { memo_id: number }).memo_id
+ : memo?.id;
+ if (memoId && confirm('이 메모에 내용이 있어요. 함께 삭제할까요?')) {
+ await memoApi.delete(memoId);
+ unsetJobMemo(segmentIdx);
+ refreshMemos();
+ }
+ } else {
+ console.error('toggle memo failed', err);
+ }
+ } finally {
+ saving = false;
+ }
+ }
 
-  function startEdit() {
-    if (!memo) return;
-    editValue = memo.memo_text;
-    editing = true;
-  }
+ function startEdit() {
+ if (!memo) return;
+ editValue = memo.memo_text;
+ editing = true;
+ }
 
-  async function saveEdit() {
-    if (!memo) return;
-    const trimmed = editValue.slice(0, 500);
-    if (trimmed === memo.memo_text) {
-      editing = false;
-      return;
-    }
-    try {
-      await memoApi.updateText(memo.id, trimmed);
-      updateJobMemoText(memo.id, trimmed);
-      refreshMemos();
-    } catch (err) {
-      console.error('update memo failed', err);
-    } finally {
-      editing = false;
-    }
-  }
+ async function saveEdit() {
+ if (!memo) return;
+ const trimmed = editValue.slice(0, 500);
+ if (trimmed === memo.memo_text) {
+ editing = false;
+ return;
+ }
+ try {
+ await memoApi.updateText(memo.id, trimmed);
+ updateJobMemoText(memo.id, trimmed);
+ refreshMemos();
+ } catch (err) {
+ console.error('update memo failed', err);
+ } finally {
+ editing = false;
+ }
+ }
 
-  function cancelEdit() {
-    editing = false;
-  }
+ function cancelEdit() {
+ editing = false;
+ }
 
-  function handleKey(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      saveEdit();
-    } else if (e.key === 'Escape') {
-      cancelEdit();
-    }
-  }
+ function handleKey(e: KeyboardEvent) {
+ if (e.key === 'Enter' && !e.shiftKey) {
+ e.preventDefault();
+ saveEdit();
+ } else if (e.key === 'Escape') {
+ cancelEdit();
+ }
+ }
 </script>
 
 <div class="flex items-start gap-2">
-  <button
-    type="button"
-    on:click|stopPropagation={toggleSave}
-    disabled={saving}
-    class="shrink-0 p-1 rounded transition-colors
-           {isSaved
-             ? 'text-brand'
-             : 'text-text-secondary-light dark:text-text-secondary-dark hover:text-brand'}
-           disabled:opacity-50"
-    aria-label={isSaved ? '저장 해제' : '저장'}
-    title={isSaved ? '저장 해제' : '저장'}
-  >
-    <Bookmark size={16} fill={isSaved ? 'currentColor' : 'none'} strokeWidth={1.75} />
-  </button>
+ <button
+ type="button"
+ on:click|stopPropagation={toggleSave}
+ disabled={saving}
+ class="shrink-0 p-1 rounded transition-colors
+ {isSaved
+ ? 'text-brand'
+ : 'text-text-secondary-light dark:text-text-secondary-dark hover:text-brand'}
+ disabled:opacity-50"
+ aria-label={isSaved ? '저장 해제' : '저장'}
+ title={isSaved ? '저장 해제' : '저장'}
+ >
+ <Bookmark size={16} fill={isSaved ? 'currentColor' : 'none'} strokeWidth={1.75} />
+ </button>
 
-  {#if isSaved && memo}
-    <div class="flex-1 min-w-0">
-      {#if editing}
-        <!-- svelte-ignore a11y-autofocus -->
-        <textarea
-          autofocus
-          bind:value={editValue}
-          on:keydown={handleKey}
-          on:blur={saveEdit}
-          maxlength={500}
-          rows="2"
-          class="w-full text-[12px] p-2 rounded-md border
-                 border-divider-light dark:border-white/10
-                 bg-surface-light dark:bg-surface-dark
-                 text-text-primary-light dark:text-text-primary-dark
-                 focus:outline-none focus:ring-1 focus:ring-brand resize-none"
-          placeholder="메모 (최대 500자, Enter 저장, Esc 취소)"
-        />
-      {:else}
-        <button
-          type="button"
-          on:click|stopPropagation={startEdit}
-          class="w-full text-left text-[12px] leading-snug
-                 text-text-secondary-light dark:text-text-secondary-dark
-                 hover:text-text-primary-light dark:hover:text-text-primary-dark
-                 transition-colors"
-        >
-          {#if memo.memo_text}
-            <span class="whitespace-pre-wrap">💭 {memo.memo_text}</span>
-            <span class="text-[10px] opacity-60 ml-1">
-              <Pencil size={10} class="inline" />
-            </span>
-          {:else}
-            <span class="opacity-60">＋ 메모 추가</span>
-          {/if}
-        </button>
-      {/if}
-    </div>
-  {/if}
+ {#if isSaved && memo}
+ <div class="flex-1 min-w-0">
+ {#if editing}
+ <!-- svelte-ignore a11y-autofocus -->
+ <textarea
+ autofocus
+ bind:value={editValue}
+ on:keydown={handleKey}
+ on:blur={saveEdit}
+ maxlength={500}
+ rows="2"
+ class="w-full text-[12px] p-2 rounded-md border
+ border-divider-light dark:border-white/10
+ bg-surface-light dark:bg-surface-dark
+ text-text-primary-light dark:text-text-primary-dark
+ focus:outline-none focus:ring-1 focus:ring-brand resize-none"
+ placeholder="메모 (최대 500자, Enter 저장, Esc 취소)"
+ />
+ {:else}
+ <button
+ type="button"
+ on:click|stopPropagation={startEdit}
+ class="w-full text-left text-[12px] leading-snug
+ text-text-secondary-light dark:text-text-secondary-dark
+ hover:text-text-primary-light dark:hover:text-text-primary-dark
+ transition-colors"
+ >
+ {#if memo.memo_text}
+ <span class="whitespace-pre-wrap">💭 {memo.memo_text}</span>
+ <span class="text-[10px] opacity-60 ml-1">
+ <Pencil size={10} class="inline" />
+ </span>
+ {:else}
+ <span class="opacity-60">＋ 메모 추가</span>
+ {/if}
+ </button>
+ {/if}
+ </div>
+ {/if}
 </div>
 ```
 
@@ -305,8 +303,6 @@ feat(memo): add SegmentMemo component (📎 toggle + inline memo edit)
 - Enter 저장, Esc 취소, blur 저장. maxlength 500.
 
 jobMemos map으로 저장 상태 O(1) 조회.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -333,75 +329,75 @@ wc -l frontend/src/lib/ui/SegmentList.svelte
 Edit `frontend/src/lib/ui/SegmentList.svelte`:
 
 1. `<script>` 상단 import 추가:
-   ```ts
-   import SegmentMemo from '$lib/ui/SegmentMemo.svelte';
-   ```
+ ```ts
+ import SegmentMemo from '$lib/ui/SegmentMemo.svelte';
+ ```
 
 2. 각 세그먼트 렌더링 영역(텍스트 아래 또는 옆) 에 SegmentMemo 배치. 기존 스크립트 맨 위 export 중 `jobId` 가 있는지 확인 — 있으면 재사용, 없으면 새로 prop 추가:
-   ```svelte
-   <script lang="ts">
-     // 기존 props ...
-     export let jobId: string;
-   </script>
-   ```
+ ```svelte
+ <script lang="ts">
+ // 기존 props ...
+ export let jobId: string;
+ </script>
+ ```
 
 3. 각 segment 블록 내 텍스트 바로 아래 (또는 카드 우상단)에 삽입:
-   ```svelte
-   <!-- 세그먼트 카드 예시 구조 (기존에 맞춰 삽입 위치 조정) -->
-   <div class="segment-card ...">
-     <div class="flex items-start gap-2">
-       <div class="flex-1">
-         <div class="timestamp">...</div>
-         <div class="text">{segment.text}</div>
-       </div>
-       <SegmentMemo {jobId} segmentIdx={segment.idx} />
-     </div>
-   </div>
-   ```
+ ```svelte
+ <!-- 세그먼트 카드 예시 구조 (기존에 맞춰 삽입 위치 조정) -->
+ <div class="segment-card ...">
+ <div class="flex items-start gap-2">
+ <div class="flex-1">
+ <div class="timestamp">...</div>
+ <div class="text">{segment.text}</div>
+ </div>
+ <SegmentMemo {jobId} segmentIdx={segment.idx} />
+ </div>
+ </div>
+ ```
 
-   실제 SegmentList의 구조가 다르면 유사 위치에 맞춰 조정. 핵심은:
-   - `jobId` 를 SegmentList 레벨에서 받아 모든 자식 SegmentMemo로 전달
-   - `segmentIdx` 는 각 segment의 `idx` 를 쓴다
+ 실제 SegmentList의 구조가 다르면 유사 위치에 맞춰 조정. 핵심은:
+ - `jobId` 를 SegmentList 레벨에서 받아 모든 자식 SegmentMemo로 전달
+ - `segmentIdx` 는 각 segment의 `idx` 를 쓴다
 
 - [ ] **Step 3: ReadyScreen에서 jobMemos 로드**
 
 Edit `frontend/src/lib/screens/ReadyScreen.svelte`:
 
 1. 상단 import 추가:
-   ```ts
-   import { loadJobMemos, clearJobMemos } from '$lib/stores/jobMemos';
-   ```
+ ```ts
+ import { loadJobMemos, clearJobMemos } from '$lib/stores/jobMemos';
+ ```
 
 2. 기존 `onMount` 내 job/segments 로드 후 호출:
-   ```ts
-   onMount(async () => {
-     try {
-       [job, segments] = await Promise.all([api.getJob(jobId), api.segments(jobId)]);
-       loadJobMemos(jobId);  // ← 추가
-     } catch (e) {
-       // ... 기존 404 처리 ...
-     }
-   });
-   ```
+ ```ts
+ onMount(async () => {
+ try {
+ [job, segments] = await Promise.all([api.getJob(jobId), api.segments(jobId)]);
+ loadJobMemos(jobId); // ← 추가
+ } catch (e) {
+ // ... 기존 404 처리 ...
+ }
+ });
+ ```
 
 3. `onDestroy` (또는 별도 추가) 에 cleanup:
-   ```ts
-   onDestroy(() => {
-     unshort?.();
-     clearJobMemos();  // ← 추가
-   });
-   ```
+ ```ts
+ onDestroy(() => {
+ unshort?.();
+ clearJobMemos(); // ← 추가
+ });
+ ```
 
 4. SegmentList에 `jobId` prop 전달:
-   ```svelte
-   <SegmentList
-     {jobId}  <!-- ← 추가 -->
-     {segments}
-     bind:currentTime
-     onJump={(t) => playerRef?.seekTo(t)}
-     language={job?.language}
-   />
-   ```
+ ```svelte
+ <SegmentList
+ {jobId} <!-- ← 추가 -->
+ {segments}
+ bind:currentTime
+ onJump={(t) => playerRef?.seekTo(t)}
+ language={job?.language}
+ />
+ ```
 
 - [ ] **Step 4: 타입체크**
 
@@ -432,8 +428,6 @@ feat(memo): integrate SegmentMemo into SegmentList + load jobMemos
 - ReadyScreen: onMount에서 loadJobMemos(jobId), onDestroy에서 clearJobMemos
 
 SegmentMemo는 jobMemos store로 자신의 저장 상태를 O(1) 판단.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```

@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-04-22-memo-feature-design.md`
 
-**모델 규약**: 모든 에이전트·서브태스크는 **Opus 4.7** 사용. `Agent` tool 호출 시 `model: "opus"` 명시.
+**모델 규약**: 
 
 ---
 

@@ -25,84 +25,84 @@ Write `frontend/src/lib/ui/MemoCard.svelte`:
 
 ```svelte
 <script lang="ts">
-  import { Trash2 } from 'lucide-svelte';
+ import { Trash2 } from 'lucide-svelte';
 
-  import type { MemoListItemDto } from '$lib/api/types';
+ import type { MemoListItemDto } from '$lib/api/types';
 
-  export let memo: MemoListItemDto;
-  export let onOpen: (memo: MemoListItemDto) => void;
-  export let onDelete: (memoId: number) => void;
+ export let memo: MemoListItemDto;
+ export let onOpen: (memo: MemoListItemDto) => void;
+ export let onDelete: (memoId: number) => void;
 
-  let hovered = false;
+ let hovered = false;
 
-  function fmtMMSS(sec: number): string {
-    const total = Math.floor(sec);
-    const m = Math.floor(total / 60);
-    const s = total % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  }
+ function fmtMMSS(sec: number): string {
+ const total = Math.floor(sec);
+ const m = Math.floor(total / 60);
+ const s = total % 60;
+ return `${m}:${s.toString().padStart(2, '0')}`;
+ }
 
-  function handleClick() {
-    if (!memo.job_alive) return;
-    onOpen(memo);
-  }
+ function handleClick() {
+ if (!memo.job_alive) return;
+ onOpen(memo);
+ }
 
-  function handleDelete(e: MouseEvent) {
-    e.stopPropagation();
-    if (confirm('이 메모를 삭제할까요?')) {
-      onDelete(memo.id);
-    }
-  }
+ function handleDelete(e: MouseEvent) {
+ e.stopPropagation();
+ if (confirm('이 메모를 삭제할까요?')) {
+ onDelete(memo.id);
+ }
+ }
 </script>
 
 <li
-  class="relative rounded-lg px-3 py-2 transition-colors
-         {memo.job_alive
-           ? 'hover:bg-black/[0.04] dark:hover:bg-white/[0.04] cursor-pointer'
-           : 'opacity-50 cursor-not-allowed'}"
-  on:mouseenter={() => (hovered = true)}
-  on:mouseleave={() => (hovered = false)}
-  on:click={handleClick}
-  on:keydown={(e) => (e.key === 'Enter' ? handleClick() : null)}
-  role="button"
-  tabindex={memo.job_alive ? 0 : -1}
+ class="relative rounded-lg px-3 py-2 transition-colors
+ {memo.job_alive
+ ? 'hover:bg-black/[0.04] dark:hover:bg-white/[0.04] cursor-pointer'
+ : 'opacity-50 cursor-not-allowed'}"
+ on:mouseenter={() => (hovered = true)}
+ on:mouseleave={() => (hovered = false)}
+ on:click={handleClick}
+ on:keydown={(e) => (e.key === 'Enter' ? handleClick() : null)}
+ role="button"
+ tabindex={memo.job_alive ? 0 : -1}
 >
-  <div class="text-[12px] leading-snug text-text-primary-light dark:text-text-primary-dark line-clamp-2">
-    {memo.segment_text}
-  </div>
+ <div class="text-[12px] leading-snug text-text-primary-light dark:text-text-primary-dark line-clamp-2">
+ {memo.segment_text}
+ </div>
 
-  {#if memo.memo_text}
-    <div class="mt-1 text-[11px] leading-snug
-                text-text-secondary-light dark:text-text-secondary-dark
-                line-clamp-2">
-      💭 {memo.memo_text}
-    </div>
-  {/if}
+ {#if memo.memo_text}
+ <div class="mt-1 text-[11px] leading-snug
+ text-text-secondary-light dark:text-text-secondary-dark
+ line-clamp-2">
+ 💭 {memo.memo_text}
+ </div>
+ {/if}
 
-  <div class="mt-1.5 text-[10px] text-text-secondary-light dark:text-text-secondary-dark
-              flex items-center gap-1.5">
-    <span class="truncate">{memo.job_title ?? '(제목 없음)'}</span>
-    <span>·</span>
-    <span class="tabular-nums shrink-0">{fmtMMSS(memo.start)}</span>
-    {#if !memo.job_alive}
-      <span class="ml-auto px-1.5 py-0.5 rounded bg-text-secondary-light/10 text-[9px]">
-        영상 삭제됨
-      </span>
-    {/if}
-  </div>
+ <div class="mt-1.5 text-[10px] text-text-secondary-light dark:text-text-secondary-dark
+ flex items-center gap-1.5">
+ <span class="truncate">{memo.job_title ?? '(제목 없음)'}</span>
+ <span>·</span>
+ <span class="tabular-nums shrink-0">{fmtMMSS(memo.start)}</span>
+ {#if !memo.job_alive}
+ <span class="ml-auto px-1.5 py-0.5 rounded bg-text-secondary-light/10 text-[9px]">
+ 영상 삭제됨
+ </span>
+ {/if}
+ </div>
 
-  {#if hovered}
-    <button
-      type="button"
-      on:click={handleDelete}
-      class="absolute right-2 top-2 p-1 rounded
-             text-text-secondary-light dark:text-text-secondary-dark
-             hover:bg-danger/10 hover:text-danger transition-colors"
-      aria-label="메모 삭제"
-    >
-      <Trash2 size={13} />
-    </button>
-  {/if}
+ {#if hovered}
+ <button
+ type="button"
+ on:click={handleDelete}
+ class="absolute right-2 top-2 p-1 rounded
+ text-text-secondary-light dark:text-text-secondary-dark
+ hover:bg-danger/10 hover:text-danger transition-colors"
+ aria-label="메모 삭제"
+ >
+ <Trash2 size={13} />
+ </button>
+ {/if}
 </li>
 ```
 
@@ -128,8 +128,6 @@ feat(memo): add MemoCard component
 
 job_alive=false: opacity + "영상 삭제됨" 배지 + 클릭 비활성.
 Hover 시 우상단에 삭제 버튼.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -168,31 +166,31 @@ let sidebarTab: 'videos' | 'memos' = 'videos';
 기존 onMount가 있으면 거기에 `refreshMemos()` 추가:
 ```ts
 onMount(async () => {
-  // 기존 로직 ...
-  refreshMemos();
+ // 기존 로직 ...
+ refreshMemos();
 });
 ```
 
 탭 변경 시 메모 탭 진입 시 refresh:
 ```ts
 $: if (sidebarTab === 'memos' && !collapsed) {
-  refreshMemos();
+ refreshMemos();
 }
 ```
 
 메모 핸들러:
 ```ts
 async function handleOpenMemo(m: MemoListItemDto) {
-  openMemo(m.job_id, m.start);
+ openMemo(m.job_id, m.start);
 }
 
 async function handleDeleteMemo(memoId: number) {
-  removeMemoLocal(memoId);
-  try {
-    await memoApi.delete(memoId);
-  } catch {
-    refreshMemos();  // 실패 시 서버에서 다시
-  }
+ removeMemoLocal(memoId);
+ try {
+ await memoApi.delete(memoId);
+ } catch {
+ refreshMemos(); // 실패 시 서버에서 다시
+ }
 }
 ```
 
@@ -203,70 +201,70 @@ async function handleDeleteMemo(memoId: number) {
 ```svelte
 <!-- 변경 전 패턴 (기존 위치):
 <nav aria-label="작업 이력" class="...">
-  <!-- 작업 이력 렌더링 -->
+ <!-- 작업 이력 렌더링 -->
 </nav>
 
 변경 후: -->
 
 <!-- 탭 헤더 -->
 <div class="flex border-b border-black/5 dark:border-white/5 px-3">
-  <button
-    type="button"
-    class="flex-1 py-2 text-[12px] font-medium flex items-center justify-center gap-1.5
-           {sidebarTab === 'videos'
-             ? 'text-brand border-b-2 border-brand'
-             : 'text-text-secondary-light dark:text-text-secondary-dark hover:text-text-primary-light dark:hover:text-text-primary-dark'}"
-    on:click={() => (sidebarTab = 'videos')}
-  >
-    <Video size={14} strokeWidth={1.75} />
-    영상
-    {#if $history.length > 0}
-      <span class="text-[10px] opacity-70">{$history.length}</span>
-    {/if}
-  </button>
-  <button
-    type="button"
-    class="flex-1 py-2 text-[12px] font-medium flex items-center justify-center gap-1.5
-           {sidebarTab === 'memos'
-             ? 'text-brand border-b-2 border-brand'
-             : 'text-text-secondary-light dark:text-text-secondary-dark hover:text-text-primary-light dark:hover:text-text-primary-dark'}"
-    on:click={() => (sidebarTab = 'memos')}
-  >
-    <Bookmark size={14} strokeWidth={1.75} />
-    메모
-    {#if $memos.length > 0}
-      <span class="text-[10px] opacity-70">{$memos.length}</span>
-    {/if}
-  </button>
+ <button
+ type="button"
+ class="flex-1 py-2 text-[12px] font-medium flex items-center justify-center gap-1.5
+ {sidebarTab === 'videos'
+ ? 'text-brand border-b-2 border-brand'
+ : 'text-text-secondary-light dark:text-text-secondary-dark hover:text-text-primary-light dark:hover:text-text-primary-dark'}"
+ on:click={() => (sidebarTab = 'videos')}
+ >
+ <Video size={14} strokeWidth={1.75} />
+ 영상
+ {#if $history.length > 0}
+ <span class="text-[10px] opacity-70">{$history.length}</span>
+ {/if}
+ </button>
+ <button
+ type="button"
+ class="flex-1 py-2 text-[12px] font-medium flex items-center justify-center gap-1.5
+ {sidebarTab === 'memos'
+ ? 'text-brand border-b-2 border-brand'
+ : 'text-text-secondary-light dark:text-text-secondary-dark hover:text-text-primary-light dark:hover:text-text-primary-dark'}"
+ on:click={() => (sidebarTab = 'memos')}
+ >
+ <Bookmark size={14} strokeWidth={1.75} />
+ 메모
+ {#if $memos.length > 0}
+ <span class="text-[10px] opacity-70">{$memos.length}</span>
+ {/if}
+ </button>
 </div>
 
 <!-- 탭 콘텐츠 -->
 {#if sidebarTab === 'videos'}
-  <nav aria-label="작업 이력" class="flex-1 overflow-y-auto">
-    <!-- 기존 작업 이력 렌더링 블록을 그대로 이 안에 유지 -->
-    ...
-  </nav>
+ <nav aria-label="작업 이력" class="flex-1 overflow-y-auto">
+ <!-- 기존 작업 이력 렌더링 블록을 그대로 이 안에 유지 -->
+ ...
+ </nav>
 {:else}
-  <nav aria-label="저장한 메모" class="flex-1 overflow-y-auto px-2 py-2">
-    {#if $memos.length === 0}
-      <div class="text-[13px] text-text-secondary-light dark:text-text-secondary-dark
-                  px-3 py-6 text-center">
-        아직 저장한 문장이 없어요.
-        <br />
-        자막 오른쪽 📎 로 저장해 보세요.
-      </div>
-    {:else}
-      <ul class="space-y-1">
-        {#each $memos as memo (memo.id)}
-          <MemoCard
-            {memo}
-            onOpen={handleOpenMemo}
-            onDelete={handleDeleteMemo}
-          />
-        {/each}
-      </ul>
-    {/if}
-  </nav>
+ <nav aria-label="저장한 메모" class="flex-1 overflow-y-auto px-2 py-2">
+ {#if $memos.length === 0}
+ <div class="text-[13px] text-text-secondary-light dark:text-text-secondary-dark
+ px-3 py-6 text-center">
+ 아직 저장한 문장이 없어요.
+ <br />
+ 자막 오른쪽 📎 로 저장해 보세요.
+ </div>
+ {:else}
+ <ul class="space-y-1">
+ {#each $memos as memo (memo.id)}
+ <MemoCard
+ {memo}
+ onOpen={handleOpenMemo}
+ onDelete={handleDeleteMemo}
+ />
+ {/each}
+ </ul>
+ {/if}
+ </nav>
 {/if}
 ```
 
@@ -298,8 +296,6 @@ feat(memo): add sidebar tabs (영상 / 메모) with count badges
 - 메모 탭: refreshMemos() 자동 호출, MemoCard 리스트
 - 빈 상태 문구: "아직 저장한 문장이 없어요"
 - 메모 카드 클릭 → openMemo(jobId, start) 호출
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -325,33 +321,33 @@ Edit `confirmDelete`:
 
 ```ts
 async function confirmDelete(item: HistoryItem) {
-  const name = item.title || '이 작업';
-  let memoCount = 0;
-  try {
-    const res = await memoApi.listForJob(item.jobId);
-    memoCount = res.items.length;
-  } catch {
-    // 무시, 0으로 진행
-  }
+ const name = item.title || '이 작업';
+ let memoCount = 0;
+ try {
+ const res = await memoApi.listForJob(item.jobId);
+ memoCount = res.items.length;
+ } catch {
+ // 무시, 0으로 진행
+ }
 
-  const memoLine = memoCount > 0
-    ? `\n이 영상에 저장한 메모 ${memoCount}개도 함께 삭제됩니다.`
-    : '';
+ const memoLine = memoCount > 0
+ ? `\n이 영상에 저장한 메모 ${memoCount}개도 함께 삭제됩니다.`
+ : '';
 
-  if (!confirm(`"${name}"을(를) 삭제할까요?\n영상과 자막 파일도 함께 삭제돼요.${memoLine}`)) {
-    return;
-  }
+ if (!confirm(`"${name}"을(를) 삭제할까요?\n영상과 자막 파일도 함께 삭제돼요.${memoLine}`)) {
+ return;
+ }
 
-  try {
-    await api.deleteJob(item.jobId);
-  } catch {
-    // 이미 삭제된 경우 무시
-  }
-  removeFromHistory(item.jobId);
-  if ($current.jobId === item.jobId) reset();
-  if (memoCount > 0) {
-    refreshMemos();  // 전역 메모 리스트에서 제거됨
-  }
+ try {
+ await api.deleteJob(item.jobId);
+ } catch {
+ // 이미 삭제된 경우 무시
+ }
+ removeFromHistory(item.jobId);
+ if ($current.jobId === item.jobId) reset();
+ if (memoCount > 0) {
+ refreshMemos(); // 전역 메모 리스트에서 제거됨
+ }
 }
 ```
 
@@ -378,8 +374,6 @@ Job 삭제 확인 다이얼로그에 "이 영상의 메모 N개도 함께 삭제
 추가 (메모가 있을 때만). 스펙 §4.5.
 
 삭제 성공 시 refreshMemos로 전역 리스트에서도 제거됨 반영.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -411,18 +405,18 @@ export let onLoadedMetadata: (() => void) | null = null;
 `<video>` 태그에 바인드:
 ```svelte
 <video
-  bind:this={videoEl}
-  on:loadedmetadata={() => onLoadedMetadata?.()}
-  ... 기존 속성들 ...
+ bind:this={videoEl}
+ on:loadedmetadata={() => onLoadedMetadata?.()}
+ ... 기존 속성들 ...
 >
 ```
 
 `seekTo` 함수가 이미 있다면 유지. 없으면 추가:
 ```ts
 export function seekTo(seconds: number): void {
-  if (videoEl) {
-    videoEl.currentTime = seconds;
-  }
+ if (videoEl) {
+ videoEl.currentTime = seconds;
+ }
 }
 ```
 
@@ -446,8 +440,6 @@ feat(memo): expose onLoadedMetadata callback on VideoPlayer
 
 ReadyScreen이 loadedmetadata 이벤트 후에만 seekTo를 호출하도록
 콜백 노출. seek before load 실패 방지.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -472,41 +464,41 @@ head -60 frontend/src/lib/screens/ReadyScreen.svelte
 Edit `frontend/src/lib/screens/ReadyScreen.svelte`:
 
 1. `<script>` 상단 import 추가:
-   ```ts
-   import { current } from '$lib/stores/current';
-   ```
-   (이미 있으면 skip.)
+ ```ts
+ import { current } from '$lib/stores/current';
+ ```
+ (이미 있으면 skip.)
 
 2. state 선언부에 추가:
-   ```ts
-   let videoReady = false;
-   let lastSeekTarget: number | null = null;
-   ```
+ ```ts
+ let videoReady = false;
+ let lastSeekTarget: number | null = null;
+ ```
 
 3. reactive 블록 추가 (기존 onMount 밖, script 하단):
-   ```ts
-   $: if (
-     $current.initialTime !== undefined
-     && $current.initialTime !== lastSeekTarget
-     && playerRef
-     && videoReady
-   ) {
-     playerRef.seekTo($current.initialTime);
-     lastSeekTarget = $current.initialTime;
-   }
-   ```
+ ```ts
+ $: if (
+ $current.initialTime !== undefined
+ && $current.initialTime !== lastSeekTarget
+ && playerRef
+ && videoReady
+ ) {
+ playerRef.seekTo($current.initialTime);
+ lastSeekTarget = $current.initialTime;
+ }
+ ```
 
 4. `<VideoPlayer>` 태그에 `onLoadedMetadata` 프롭 전달:
-   ```svelte
-   <VideoPlayer
-     bind:this={playerRef}
-     bind:currentTime
-     src={api.videoUrl(jobId)}
-     vttSrc={api.vttUrl(jobId)}
-     onError={() => (videoError = true)}
-     onLoadedMetadata={() => (videoReady = true)}
-   />
-   ```
+ ```svelte
+ <VideoPlayer
+ bind:this={playerRef}
+ bind:currentTime
+ src={api.videoUrl(jobId)}
+ vttSrc={api.vttUrl(jobId)}
+ onError={() => (videoError = true)}
+ onLoadedMetadata={() => (videoReady = true)}
+ />
+ ```
 
 - [ ] **Step 3: 타입체크 + 빌드**
 
@@ -532,8 +524,6 @@ feat(memo): reactive seek on current.initialTime change
 - lastSeekTarget 가드로 중복 실행 방지
 
 메모 "보러가기" 클릭 → current.initialTime 세팅 → 자동 seek.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
