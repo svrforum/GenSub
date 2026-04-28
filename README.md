@@ -71,6 +71,69 @@ open http://localhost:8000
 
 ---
 
+## Linux 서버 / NVIDIA GPU
+
+기본 설정은 **CPU `int8`** 모드로 어디서든(macOS·Linux x86_64·Linux ARM64) 그대로 동작합니다. NVIDIA GPU가 있는 Linux 서버에서 가속하려면:
+
+### 1. NVIDIA Container Toolkit 설치 (호스트)
+
+```bash
+# Ubuntu/Debian 기준 — 자세한 건 NVIDIA 공식 문서 참고
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
+  sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+sudo apt update && sudo apt install -y nvidia-container-toolkit
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+```
+
+### 2. GPU override 적용
+
+```bash
+cp compose.gpu.yaml.example compose.override.yaml
+docker compose up -d
+docker compose exec worker nvidia-smi   # GPU 인식 확인
+```
+
+또는 override 없이 직접:
+
+```bash
+docker compose -f compose.yaml -f compose.gpu.yaml.example up -d
+```
+
+`compose.gpu.yaml.example` 가 worker에 `COMPUTE_TYPE=float16` + NVIDIA runtime을 더해줍니다.
+
+### 3. 부팅 시 자동 시작 (옵션 — systemd)
+
+서버용으로 부팅 시 자동 기동하려면 `/etc/systemd/system/gensub.service`:
+
+```ini
+[Unit]
+Description=GenSub
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/path/to/GenSub
+ExecStart=/usr/bin/docker compose up -d
+ExecStop=/usr/bin/docker compose down
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable --now gensub
+```
+
+> ℹ️ **Linux 호스트 직접 검증은 아직**: 컨테이너 내부가 `python:3.11-slim`(Debian)이라 사실상 Linux에서 빌드/실행되며 동작이 동일하지만, 본 프로젝트의 1차 개발은 macOS에서 진행됐습니다. 문제 발생 시 GitHub Issues로 알려주세요.
+
+---
+
 ## 개발
 
 핫 리로드 모드:

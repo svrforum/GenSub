@@ -1,0 +1,30 @@
+# NVIDIA GPU 가속용 override.
+#
+# 사전 조건 (호스트):
+# 1) Linux + NVIDIA 드라이버 설치 (nvidia-smi 동작)
+# 2) NVIDIA Container Toolkit 설치
+#    https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+#    설치 후 docker daemon 재시작.
+#
+# 사용법:
+#   docker compose -f compose.yaml -f compose.gpu.yaml up -d
+#
+# 또는 이 파일을 compose.override.yaml 로 복사해서 자동 로드:
+#   cp compose.gpu.yaml.example compose.override.yaml
+#   docker compose up -d
+#
+# 검증:
+#   docker compose exec worker nvidia-smi
+#   → GPU 정보가 출력되면 OK
+
+services:
+  worker:
+    environment:
+      COMPUTE_TYPE: float16        # GPU에서는 int8 대신 float16 권장
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
