@@ -45,11 +45,12 @@ def format_srt(segments: Iterable[SegmentData]) -> str:
 
 def format_vtt(segments: Iterable[SegmentData]) -> str:
     lines = ["WEBVTT", ""]
-    # cue 설정:
-    # - line:90%   하단에서 약간 위쪽
+    # cue 설정 (긴 자막의 wrap 잘림 방지):
+    # - size:90%        영상 가로폭의 90%까지 사용 → 한 줄에 더 많이 담아 wrap 횟수 줄임
     # - position:50% align:center  가로 중앙 정렬
-    # - size:80%   영상 가로폭의 80%로 제한 → 길어지면 자동 줄바꿈
-    cue_settings = "line:90% position:50% align:center size:80%"
+    # - line: 명시 안 함 → 브라우저 기본(line:auto, 정수 line-snap)
+    #   wrap된 cue 가 화면 바닥부터 채워지며 자동으로 위로 push → 잘림 방지
+    cue_settings = "size:90% align:center position:50%"
     for seg in segments:
         lines.append(f"{_ts_vtt(seg.start)} --> {_ts_vtt(seg.end)} {cue_settings}")
         lines.append(seg.text)
